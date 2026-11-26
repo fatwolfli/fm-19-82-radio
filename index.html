@@ -932,6 +932,7 @@
       isPlaying: false,
       isReplyMode: false,
       audioCtx: null,
+      playbackSessionId: 0,
       timers: [],
       isTyping: false,
       typingTimer: null,
@@ -942,60 +943,86 @@
 
     // =========================================================================
     // 2. 16-Bit 机械拟物音效与双声道八音盒合成器（Web Audio API）
+    //    修复：长文本对话后 AudioContext 挂起/中断导致播放无声的问题
     // =========================================================================
-    function getAudioCtx() {
-      if (!state.audioCtx) {
-        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    async function ensureAudioReady() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+
+      if (!state.audioCtx || state.audioCtx.state === 'closed') {
+        state.audioCtx = new AudioContextClass();
       }
-      if (state.audioCtx.state === 'suspended') {
-        state.audioCtx.resume();
+      if (state.audioCtx.state !== 'running') {
+        try {
+          await state.audioCtx.resume();
+        } catch (e) {}
       }
       return state.audioCtx;
     }
 
     function playChipBeep(freq = 520, duration = 0.035, type = 'triangle', volume = 0.025) {
       if (state.isPlaying) return;
-      try {
-        const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        gain.gain.setValueAtTime(volume, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + duration);
-      } catch (e) {}
+      ensureAudioReady().then(ctx => {
+        if (!ctx || ctx.state !== 'running' || state.isPlaying) return;
+        try {
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(volume, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.onended = () => {
+            try {
+              osc.disconnect();
+              gain.disconnect();
+            } catch (e) {}
+          };
+          osc.start(now);
+          osc.stop(now + duration + 0.01);
+        } catch (e) {}
+      });
     }
 
     function playMechanicalClick(type = 'insert') {
-      try {
-        const ctx = getAudioCtx();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'square';
-        if (type === 'eject') {
-          osc.frequency.setValueAtTime(220, now);
-          osc.frequency.exponentialRampToValueAtTime(420, now + 0.055);
-        } else {
-          osc.frequency.setValueAtTime(380, now);
-          osc.frequency.exponentialRampToValueAtTime(140, now + 0.065);
-        }
-        gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.075);
-      } catch (e) {}
+      ensureAudioReady().then(ctx => {
+        if (!ctx) return;
+        try {
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          if (type === 'eject') {
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(420, now + 0.055);
+          } else {
+            osc.frequency.setValueAtTime(380, now);
+            osc.frequency.exponentialRampToValueAtTime(140, now + 0.065);
+          }
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.onended = () => {
+            try {
+              osc.disconnect();
+              gain.disconnect();
+            } catch (e) {}
+          };
+          osc.start(now);
+          osc.stop(now + 0.075);
+        } catch (e) {}
+      });
     }
 
-    function playMusicBoxStep(melodyFreq, durSec, bassFreq) {
+    function playMusicBoxStep(ctx, melodyFreq, durSec, bassFreq) {
+      if (!ctx) return;
+      if (ctx.state !== 'running') {
+        ctx.resume().catch(() => {});
+      }
       try {
-        const ctx = getAudioCtx();
         const now = ctx.currentTime;
 
         if (melodyFreq) {
@@ -1011,17 +1038,30 @@
 
           const release = Math.max(durSec * 2.1, 0.42);
           gain1.gain.setValueAtTime(0.001, now);
-          gain1.gain.linearRampToValueAtTime(0.08, now + 0.01);
+          gain1.gain.linearRampToValueAtTime(0.085, now + 0.01);
           gain1.gain.exponentialRampToValueAtTime(0.0001, now + release);
 
           gain2.gain.setValueAtTime(0.001, now);
-          gain2.gain.linearRampToValueAtTime(0.02, now + 0.006);
+          gain2.gain.linearRampToValueAtTime(0.022, now + 0.006);
           gain2.gain.exponentialRampToValueAtTime(0.0001, now + release * 0.6);
 
           osc1.connect(gain1);
           gain1.connect(ctx.destination);
           osc2.connect(gain2);
           gain2.connect(ctx.destination);
+
+          osc1.onended = () => {
+            try {
+              osc1.disconnect();
+              gain1.disconnect();
+            } catch (e) {}
+          };
+          osc2.onended = () => {
+            try {
+              osc2.disconnect();
+              gain2.disconnect();
+            } catch (e) {}
+          };
 
           osc1.start(now);
           osc2.start(now);
@@ -1037,11 +1077,17 @@
 
           const bassRelease = Math.max(durSec * 3.0, 0.7);
           bassGain.gain.setValueAtTime(0.001, now);
-          bassGain.gain.linearRampToValueAtTime(0.04, now + 0.02);
+          bassGain.gain.linearRampToValueAtTime(0.042, now + 0.02);
           bassGain.gain.exponentialRampToValueAtTime(0.0001, now + bassRelease);
 
           bassOsc.connect(bassGain);
           bassGain.connect(ctx.destination);
+          bassOsc.onended = () => {
+            try {
+              bassOsc.disconnect();
+              bassGain.disconnect();
+            } catch (e) {}
+          };
           bassOsc.start(now);
           bassOsc.stop(now + bassRelease + 0.05);
         }
@@ -1049,30 +1095,39 @@
     }
 
     function stopPlayback() {
+      state.playbackSessionId += 1;
       state.timers.forEach(t => clearTimeout(t));
       state.timers = [];
       state.isPlaying = false;
       updateWalkmanVisuals();
     }
 
-    function startPlayback() {
+    async function startPlayback() {
       stopPlayback();
+      const sessionId = state.playbackSessionId;
       const tape = state.selectedTape;
       const score = CORE_FULL_SCORES[tape.scoreKey] || CORE_FULL_SCORES.tongnian;
+
       state.isPlaying = true;
       updateWalkmanVisuals();
 
-      let elapsed = 45;
+      // 等待 AudioContext 彻底唤醒后再开始调度所有音符
+      const ctx = await ensureAudioReady();
+      if (!ctx || sessionId !== state.playbackSessionId) return;
+
+      let elapsed = 40;
       score.notes.forEach(([n, beats, bass]) => {
         const dur = beats * score.beatSec;
         const t = setTimeout(() => {
-          playMusicBoxStep(NOTE_FREQ[n], dur, bass ? NOTE_FREQ[bass] : 0);
+          if (sessionId !== state.playbackSessionId || !state.isPlaying) return;
+          playMusicBoxStep(ctx, NOTE_FREQ[n], dur, bass ? NOTE_FREQ[bass] : 0);
         }, elapsed);
         state.timers.push(t);
         elapsed += dur * 1000;
       });
 
       const endT = setTimeout(() => {
+        if (sessionId !== state.playbackSessionId) return;
         state.isPlaying = false;
         updateWalkmanVisuals();
       }, elapsed + 350);
@@ -1400,7 +1455,6 @@
         const admittedUnknown = /(?:没有听出来|没听出来|听不出来|听不出|不知道|猜不出|猜不到|忘记了|忘了|记不清|没印象|叫啥|哪首|什么歌|啥歌|提示|提醒|公布|揭晓|不记得|想不起来|耳熟)/.test(cleaned);
         const guessedOther = OTHER_SONG_HINTS.find(s => s.keywords.some(k => lower.includes(k)));
 
-        // 象限 A：猜对了 -> 简短确认 + 极简留白邀请阐述
         if (hitExact) {
           state.pendingGuessTape = null;
           state.guessAttemptCount = 0;
@@ -1408,7 +1462,6 @@
           return `一耳朵就听出来了，正是${tape.answer}。${hook}`;
         }
 
-        // 象限 B：说“没有听出来” -> 第1次给轻巧歌词提醒，第2次揭晓并留白转场
         if (admittedUnknown) {
           state.guessAttemptCount += 1;
           if (state.guessAttemptCount === 1) {
@@ -1428,14 +1481,12 @@
           return secondStepPivotTemplates[Math.floor(Math.random() * secondStepPivotTemplates.length)];
         }
 
-        // 象限 C：猜错了 -> 将错就错，顺着他心里那首歌留白邀请
         if (guessedOther) {
           state.pendingGuessTape = null;
           state.guessAttemptCount = 0;
           return `哈哈，这盘其实是${tape.answer}，不过你一下子联想到了${guessedOther.name}，说明你心里正装着${guessedOther.vibe}。既然提起了它，有什么想跟我说的，尽管讲就行。`;
         }
 
-        // 象限 D：直接倾诉现实故事 -> 自动解除猜歌态，全心倾听
         state.pendingGuessTape = null;
         state.guessAttemptCount = 0;
       }
@@ -1569,7 +1620,7 @@
       state.typingTimer = setInterval(() => {
         if (i < text.length) {
           contentEl.textContent += text[i++];
-          if (i % 3 === 0) playChipBeep(480 + (i % 4) * 35, 0.02, 'triangle', 0.018);
+          if (i % 4 === 0 && i < 60) playChipBeep(480 + (i % 4) * 35, 0.02, 'triangle', 0.018);
           scrollToBottom();
         } else {
           state.finishCallback();
