@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FM 19.82 · 树洞电台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-outer: #0b0a12;
+      --bg-phone: #151224;
+      --bg-screen: #110e1d;
+      --bg-walkman: #22263a;
+      --bg-walkman-face: #2d334d;
+      --bg-bubble-bot: #211c36;
+      --bg-bubble-user: #312852;
+      --border-dark: #08070d;
+      --border-hi: #485075;
+      --text-main: #f4efe6;
+      --text-sub: #a39bc2;
+      --accent-amber: #ffae52;
+      --accent-mint: #7ce8b5;
+      --accent-cyan: #5ce1e6;
+      --accent-coral: #ff7575;
+    }
+
+    body.theme-sunset {
+      --bg-outer: #1b110d;
+      --bg-phone: #291a14;
+      --bg-screen: #20140f;
+      --bg-walkman: #36221b;
+      --bg-walkman-face: #472d24;
+      --bg-bubble-bot: #36221b;
+      --bg-bubble-user: #4d3025;
+      --border-dark: #120a07;
+      --border-hi: #6e4638;
+      --text-main: #fff3e6;
+      --text-sub: #cfb29f;
+      --accent-amber: #ffb84d;
+      --accent-mint: #8be0a4;
+      --accent-cyan: #72e5eb;
+      --accent-coral: #ff7b7b;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-outer);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .font-pixel {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .font-vt {
+      font-family: 'VT323', monospace;
+    }
+
+    .pixel-panel {
+      border: 2px solid var(--border-dark);
+      box-shadow: inset 2px 2px 0 var(--border-hi), 0 3px 0 var(--border-dark);
+    }
+
+    .pixel-btn {
+      border: 2px solid var(--border-dark);
+      box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.24), 0 2px 0 var(--border-dark);
+      transition: transform 0.08s ease, filter 0.12s ease;
+    }
+
+    .pixel-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    .pixel-btn:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    .studio-banner-svg {
+      width: 100%;
+      height: 100%;
+      max-height: 124px;
+      display: block;
+    }
+
+    .avatar-svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+
+    @keyframes reelSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .reel-spinning {
+      animation: reelSpin 2.4s linear infinite;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0.25; }
+    }
+    .on-air-dot {
+      animation: blink 1.4s infinite;
+    }
+
+    @keyframes cursorBlink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .pixel-cursor {
+      animation: cursorBlink 0.75s infinite;
+    }
+
+    @keyframes vuBounce {
+      0%, 100% { height: 4px; }
+      50% { height: 14px; }
+    }
+    .vu-bar-active-1 { animation: vuBounce 0.7s infinite ease-in-out; }
+    .vu-bar-active-2 { animation: vuBounce 0.5s infinite ease-in-out 0.15s; }
+    .vu-bar-active-3 { animation: vuBounce 0.85s infinite ease-in-out 0.25s; }
+    .vu-bar-active-4 { animation: vuBounce 0.6s infinite ease-in-out 0.1s; }
+
+    /* 保持 Walkman 机身原地完全不动，小卡带架从卡带仓顶口向上弹出 */
+    .cassette-bay {
+      position: relative;
+      overflow: visible;
+    }
+
+    .cassette-lid-glass {
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+      transform-origin: bottom center;
+    }
+
+    .cassette-lid-glass.ejected {
+      transform: perspective(360px) rotateX(-20deg);
+      opacity: 0.35;
+    }
+
+    .cassette-body {
+      position: relative;
+      z-index: 10;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .cassette-body.ejected {
+      opacity: 0.28;
+    }
+
+    .pop-up-cassette-rack {
+      position: absolute;
+      left: -4px;
+      right: -4px;
+      bottom: calc(100% + 6px);
+      z-index: 35;
+      transform-origin: bottom center;
+      transition: transform 0.32s cubic-bezier(0.22, 1.32, 0.36, 1), opacity 0.22s ease;
+    }
+
+    .pop-up-cassette-rack.rack-closed {
+      opacity: 0;
+      transform: translateY(26px) scaleY(0.72);
+      pointer-events: none;
+    }
+
+    .pop-up-cassette-rack.rack-open {
+      opacity: 1;
+      transform: translateY(0) scaleY(1);
+      pointer-events: auto;
+    }
+
+    .tape-shelf::-webkit-scrollbar {
+      height: 5px;
+    }
+    .tape-shelf::-webkit-scrollbar-thumb {
+      background: #5b6591;
+      border-radius: 3px;
+    }
+
+    .crt-scanlines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+      background-size: 100% 4px;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-0 sm:p-4">
+  <div
+    id="appShell"
+    style="background-color: var(--bg-phone); border-color: var(--border-dark);"
+    class="w-full max-w-[440px] h-full sm:h-[94dvh] sm:max-h-[850px] sm:border-4 sm:rounded-2xl shadow-2xl flex flex-col relative overflow-hidden"
+  >
+    <!-- 1. 顶部电台调频栏 -->
+    <header
+      style="border-color: var(--border-dark); background-color: rgba(0, 0, 0, 0.32);"
+      class="border-b-2 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0"
+    >
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#ff595e] inline-block on-air-dot shrink-0"></span>
+        <span style="color: var(--accent-amber);" class="font-pixel text-[10px] sm:text-[11px] tracking-tight truncate">FM 19.82</span>
+        <span style="color: var(--text-sub);" class="text-xs truncate">· 树洞电台</span>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onclick="toggleStudioTheme()"
+          style="background-color: var(--bg-bubble-bot); color: var(--accent-amber);"
+          class="pixel-btn px-2 py-1 text-[11px] flex items-center gap-1 cursor-pointer"
+          title="切换深夜星空 / 暖炉色调"
+        >
+          <span id="themeIcon">🏮</span>
+          <span id="themeLabel">暖炉</span>
+        </button>
+
+        <button
+          type="button"
+          onclick="retuneRadio()"
+          style="background-color: var(--bg-bubble-bot); color: var(--text-sub);"
+          class="pixel-btn px-2 py-1 text-[11px] cursor-pointer"
+          title="重新调频开场"
+        >
+          重调频
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. 16-Bit 像素风深夜播音室小窗（保留卡通猫猫主播与怀旧物件） -->
+    <section
+      style="border-color: var(--border-dark);"
+      class="border-b-2 relative h-28 sm:h-32 shrink-0 overflow-hidden bg-[#171426]"
+    >
+      <svg viewBox="0 0 320 88" width="100%" height="124" preserveAspectRatio="xMidYMid slice" class="studio-banner-svg" shape-rendering="crispEdges">
+        <!-- 播音室墙面与木质护墙板 -->
+        <rect x="0" y="0" width="320" height="88" fill="#231c38" />
+        <rect x="0" y="48" width="320" height="2" fill="#161124" />
+        <rect x="0" y="50" width="320" height="12" fill="#3b2621" />
+
+        <!-- 深夜窗户与星空月亮 -->
+        <rect x="16" y="8" width="74" height="38" fill="#0d1126" />
+        <rect x="14" y="6" width="78" height="2" fill="#4f362d" />
+        <rect x="14" y="46" width="78" height="2" fill="#4f362d" />
+        <rect x="14" y="6" width="2" height="42" fill="#4f362d" />
+        <rect x="90" y="6" width="2" height="42" fill="#4f362d" />
+        <rect x="52" y="8" width="2" height="38" fill="#4f362d" />
+        <!-- 星星与弯月 -->
+        <rect x="24" y="13" width="2" height="2" fill="#fff3b0" />
+        <rect x="40" y="19" width="1" height="1" fill="#ffffff" />
+        <rect x="31" y="26" width="1" height="1" fill="#ffd166" />
+        <rect x="64" y="13" width="2" height="2" fill="#ffffff" />
+        <rect x="80" y="23" width="1" height="1" fill="#fff3b0" />
+        <rect x="71" y="14" width="6" height="6" fill="#ffd166" />
+        <rect x="73" y="13" width="5" height="5" fill="#0d1126" />
+        <!-- 远方居民楼与鱼骨电视天线 -->
+        <rect x="19" y="33" width="14" height="13" fill="#171d3b" />
+        <rect x="24" y="27" width="1" height="6" fill="#4a5568" />
+        <rect x="21" y="28" width="7" height="1" fill="#4a5568" />
+        <rect x="22" y="30" width="5" height="1" fill="#4a5568" />
+        <rect x="23" y="37" width="2" height="2" fill="#ffbe0b" />
+        <rect x="60" y="31" width="18" height="15" fill="#171d3b" />
+        <rect x="64" y="35" width="2" height="2" fill="#ffbe0b" />
+        <rect x="71" y="39" width="2" height="2" fill="#ffbe0b" />
+
+        <!-- 播音室长木桌 -->
+        <rect x="0" y="62" width="320" height="4" fill="#6b4436" />
+        <rect x="0" y="66" width="320" height="22" fill="#4a2e25" />
+
+        <!-- 暖光复古台灯 -->
+        <rect x="108" y="59" width="12" height="3" fill="#d4a373" />
+        <rect x="113" y="42" width="2" height="17" fill="#d4a373" />
+        <polygon points="105,42 123,42 119,33 109,33" fill="#ff9f1c" />
+        <rect x="106" y="42" width="16" height="2" fill="#ffbf69" />
+
+        <!-- 戴着大耳机的16-bit卡通猫猫主播 -->
+        <g id="hostCat">
+          <rect x="142" y="41" width="22" height="21" fill="#3a5a40" />
+          <rect x="144" y="23" width="18" height="18" fill="#f7d098" />
+          <rect x="144" y="19" width="4" height="4" fill="#f7d098" />
+          <rect x="158" y="19" width="4" height="4" fill="#f7d098" />
+          <rect x="145" y="20" width="2" height="2" fill="#ff8fa3" />
+          <rect x="159" y="20" width="2" height="2" fill="#ff8fa3" />
+          <!-- 监听大耳机 -->
+          <rect x="142" y="21" width="22" height="2" fill="#4ecdc4" />
+          <rect x="140" y="26" width="4" height="9" fill="#4ecdc4" />
+          <rect x="162" y="26" width="4" height="9" fill="#4ecdc4" />
+          <!-- 眼睛与腮红 -->
+          <rect x="148" y="29" width="2" height="3" fill="#2b2129" />
+          <rect x="156" y="29" width="2" height="3" fill="#2b2129" />
+          <rect x="146" y="33" width="2" height="1" fill="#ff8fa3" />
+          <rect x="158" y="33" width="2" height="1" fill="#ff8fa3" />
+          <rect x="152" y="33" width="2" height="2" fill="#2b2129" />
+        </g>
+
+        <!-- 悬臂广播麦克风 -->
+        <rect x="172" y="46" width="2" height="16" fill="#8d99ae" />
+        <rect x="166" y="42" width="8" height="2" fill="#8d99ae" />
+        <rect x="161" y="39" width="6" height="6" fill="#2b2d42" />
+        <rect x="162" y="40" width="4" height="4" fill="#ef233c" />
+
+        <!-- 经典橙色橘子汽水罐 + 叠放卡带 + 监听音箱 -->
+        <rect x="188" y="53" width="6" height="9" fill="#ff7b00" />
+        <rect x="189" y="52" width="4" height="1" fill="#d9d9d9" />
+        <rect x="189" y="55" width="4" height="3" fill="#ffd166" />
+
+        <rect x="200" y="58" width="16" height="4" fill="#2b2d42" />
+        <rect x="202" y="59" width="12" height="2" fill="#ffbe0b" />
+        <rect x="201" y="54" width="16" height="4" fill="#3a5a40" />
+        <rect x="203" y="55" width="12" height="2" fill="#a3b18a" />
+
+        <!-- 播音室监听器 -->
+        <rect x="226" y="39" width="64" height="23" fill="#2d3142" />
+        <rect x="228" y="41" width="60" height="19" fill="#3f455c" />
+        <rect x="232" y="44" width="28" height="13" fill="#1b1e29" />
+        <rect x="236" y="47" width="6" height="6" fill="#ffae52" />
+        <rect x="238" y="49" width="2" height="2" fill="#1b1e29" />
+        <rect x="250" y="47" width="6" height="6" fill="#ffae52" />
+        <rect x="252" y="49" width="2" height="2" fill="#1b1e29" />
+        <rect x="265" y="45" width="5" height="5" fill="#bfc0c0" />
+        <rect x="273" y="45" width="5" height="5" fill="#bfc0c0" />
+        <rect x="265" y="54" width="19" height="3" fill="#1b1e29" />
+      </svg>
+
+      <!-- 右上角怀旧标签 -->
+      <div class="absolute top-2 right-2.5 font-vt text-xs tracking-wider px-2 py-0.5 bg-black/60 text-[#ffae52] border border-white/10">
+        致 80 后的夜
+      </div>
+    </section>
+
+    <!-- 3. 中间深夜树洞对话消息流 -->
+    <main
+      id="chatScroll"
+      onclick="handleChatAreaTap(event)"
+      style="background-color: var(--bg-screen);"
+      class="flex-1 overflow-y-auto px-3.5 py-4 space-y-3.5 relative"
+    >
+      <div id="messageList" class="space-y-3.5"></div>
+    </main>
+
+    <!-- 4. 底部黄金热区：双态无缝切换引擎（状态 A：像素卡带录音机 ⇄ 状态 B：「说点啥」输入法） -->
+    <footer
+      id="bottomDeckZone"
+      style="border-color: var(--border-dark); background-color: var(--bg-walkman);"
+      class="border-t-2 shrink-0 relative z-20"
+    >
+      <!-- =================================================================== -->
+      <!-- 状态 A：16-Bit Walkman 像素卡带录音机控制台（机身不动，小卡带往上弹出） -->
+      <!-- =================================================================== -->
+      <div id="walkmanConsole" class="p-3 space-y-2 relative">
+        <!-- 机身铭牌 + 电平表 + 右上角【💬 说点啥】一键切入输入法 -->
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span style="color: var(--accent-amber);" class="font-pixel text-[9px] tracking-wider">WALKMAN · 1982</span>
+            <div class="flex items-end gap-0.5 h-3.5 px-1.5 py-0.5 bg-black/40 border border-white/10 rounded">
+              <span id="vu1" class="w-1 h-1 bg-[#7ce8b5]"></span>
+              <span id="vu2" class="w-1 h-1 bg-[#ffae52]"></span>
+              <span id="vu3" class="w-1 h-1 bg-[#7ce8b5]"></span>
+              <span id="vu4" class="w-1 h-1 bg-[#ff7575]"></span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onclick="switchToReplyMode()"
+            style="background-color: var(--accent-cyan); color: #0b1921;"
+            class="pixel-btn px-3 py-1 text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span>💬</span>
+            <span>说点啥</span>
+          </button>
+        </div>
+
+        <!-- 固定卡带仓底座（Walkman 位置全程不动，小卡带选曲架从顶部弹出） -->
+        <div
+          id="cassetteDoor"
+          onclick="handleWindowClick()"
+          style="background-color: #121521; border-color: var(--border-dark);"
+          class="cassette-bay border-2 rounded-md p-2 pt-2.5 cursor-pointer select-none"
+        >
+          <!-- 从卡带仓顶部向上弹出的【50颗迷你小卡带造型】选曲抽屉 -->
+          <div
+            id="ejectedShelfDrawer"
+            onclick="event.stopPropagation()"
+            style="background-color: #1a1e30; border-color: var(--border-dark);"
+            class="pop-up-cassette-rack rack-closed pixel-panel rounded-lg p-2.5 shadow-2xl space-y-2"
+          >
+            <div class="flex items-center justify-between text-[11px] px-0.5">
+              <span style="color: var(--accent-mint);" class="font-bold">⏏ 左右滑动挑一盘小磁带 (共50盘)：</span>
+              <button
+                type="button"
+                onclick="toggleEjectDrawer(false)"
+                style="color: var(--text-sub);"
+                class="text-xs px-1.5 py-0.5 hover:text-white cursor-pointer"
+              >
+                收起 ✕
+              </button>
+            </div>
+
+            <!-- 横向可滑动的一颗颗迷你像素盒式磁带造型 -->
+            <div id="tapeShelfList" class="tape-shelf flex items-end gap-2.5 overflow-x-auto pt-1 pb-1.5">
+              <!-- 由 JS 渲染 50 颗小卡带造型 -->
+            </div>
+
+            <!-- 咔哒装入磁带并播放的主操作键 -->
+            <button
+              type="button"
+              onclick="insertAndPlaySelectedTape()"
+              style="background-color: var(--accent-amber); color: #1d140c;"
+              class="w-full pixel-btn py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>⤵</span>
+              <span id="insertBtnText">咔哒装入小磁带 #01 并开始播放</span>
+            </button>
+          </div>
+
+          <!-- 卡带仓内部磁头暗槽 -->
+          <div class="absolute inset-x-4 bottom-2 h-14 bg-[#0b0d14] border border-white/5 rounded flex items-end justify-center pb-1.5 pointer-events-none">
+            <div class="flex items-center gap-3 opacity-55">
+              <span class="w-3 h-2 bg-[#5a638a] inline-block"></span>
+              <span class="w-5 h-2.5 bg-[#8d99ae] inline-block"></span>
+              <span class="w-3 h-2 bg-[#5a638a] inline-block"></span>
+            </div>
+          </div>
+
+          <!-- 拟物标准比例盒式磁带本体 -->
+          <div
+            id="cassetteBody"
+            style="background-color: #2b314a; border-color: #090b12;"
+            class="cassette-body border-2 rounded-md p-2 flex flex-col justify-between gap-1.5 min-h-[116px] shadow-md"
+          >
+            <!-- 磁带四角螺丝孔装饰 -->
+            <div class="flex items-center justify-between px-0.5 pointer-events-none">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#121521] border border-white/15"></span>
+              <span class="font-pixel text-[7px] text-white/35 tracking-widest">TYPE I · NORMAL POSITION 90</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-[#121521] border border-white/15"></span>
+            </div>
+
+            <!-- 磁带上半部分：手写标签纸 + 神秘线索 -->
+            <div
+              id="tapeSticker"
+              style="background-color: #f6e7cb; color: #241b15;"
+              class="rounded-sm px-2.5 py-1 border border-black/45 shadow-inner"
+            >
+              <div class="flex items-center justify-between text-[10px] font-bold opacity-80 border-b border-black/15 pb-0.5">
+                <span id="tapeSideTag">SIDE A · #01</span>
+                <span id="tapeStatusText">已入舱 · 点此换带</span>
+              </div>
+              <div id="tapeClueTitle" class="text-xs font-bold truncate mt-0.5">
+                暑假下午两点摇头的电风扇，知了在树上叫
+              </div>
+            </div>
+
+            <!-- 磁带中腰部分：左右双卷轴齿轮 + 中央透明带窗 -->
+            <div class="bg-[#181c2b] border border-black/60 rounded px-3 py-1 flex items-center justify-between gap-2">
+              <div class="w-8 h-8 rounded-full bg-[#10131e] border-2 border-[#6c76a3] flex items-center justify-center shrink-0">
+                <svg id="leftReel" viewBox="0 0 16 16" width="22" height="22" shape-rendering="crispEdges">
+                  <rect x="7" y="1" width="2" height="14" fill="#ffae52" />
+                  <rect x="1" y="7" width="14" height="2" fill="#ffae52" />
+                  <rect x="3" y="3" width="2" height="2" fill="#ffae52" />
+                  <rect x="11" y="11" width="2" height="2" fill="#ffae52" />
+                  <rect x="11" y="3" width="2" height="2" fill="#ffae52" />
+                  <rect x="3" y="11" width="2" height="2" fill="#ffae52" />
+                  <rect x="6" y="6" width="4" height="4" fill="#10131e" />
+                </svg>
+              </div>
+
+              <div class="flex-1 h-5 bg-[#0d1018] border border-white/15 rounded-sm flex items-center justify-between px-1.5 overflow-hidden">
+                <div class="w-3.5 h-3.5 rounded-full bg-[#3a261d] border border-[#6e4736]"></div>
+                <div class="flex-1 h-1 bg-[#4a3226] mx-1"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-[#3a261d] border border-[#6e4736]"></div>
+              </div>
+
+              <div class="w-8 h-8 rounded-full bg-[#10131e] border-2 border-[#6c76a3] flex items-center justify-center shrink-0">
+                <svg id="rightReel" viewBox="0 0 16 16" width="22" height="22" shape-rendering="crispEdges">
+                  <rect x="7" y="1" width="2" height="14" fill="#ffae52" />
+                  <rect x="1" y="7" width="14" height="2" fill="#ffae52" />
+                  <rect x="3" y="3" width="2" height="2" fill="#ffae52" />
+                  <rect x="11" y="11" width="2" height="2" fill="#ffae52" />
+                  <rect x="11" y="3" width="2" height="2" fill="#ffae52" />
+                  <rect x="3" y="11" width="2" height="2" fill="#ffae52" />
+                  <rect x="6" y="6" width="4" height="4" fill="#10131e" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- 磁带底部梯形磁头读写底座 -->
+            <div class="mx-auto w-[68%] h-3 bg-[#202538] border-t-2 border-x-2 border-[#111420] rounded-t flex items-center justify-around px-3">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#0b0d14]"></span>
+              <span class="w-2.5 h-1.5 bg-[#0b0d14]"></span>
+              <span class="w-3 h-1.5 bg-[#4a3226] border border-black/50"></span>
+              <span class="w-2.5 h-1.5 bg-[#0b0d14]"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-[#0b0d14]"></span>
+            </div>
+          </div>
+
+          <!-- 透明舱门玻璃高光层 -->
+          <div
+            id="cassetteLidGlass"
+            class="cassette-lid-glass pointer-events-none absolute inset-1.5 rounded border border-white/15 bg-gradient-to-tr from-transparent via-white/[0.03] to-white/[0.08] z-20"
+          ></div>
+        </div>
+
+        <!-- 实体掌机控制按键排（始终稳稳固定在 Walkman 底部） -->
+        <div class="grid grid-cols-4 gap-2">
+          <button
+            type="button"
+            onclick="toggleEjectDrawer()"
+            style="background-color: var(--bg-walkman-face); color: var(--accent-mint);"
+            class="col-span-2 pixel-btn py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <span>⏏</span>
+            <span id="ejectKeyLabel">EJECT 弹出小磁带</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="switchPrevNextTape(-1)"
+            style="background-color: var(--bg-walkman-face); color: var(--text-main);"
+            class="pixel-btn py-2 text-xs font-bold flex items-center justify-center cursor-pointer"
+            title="上一盘磁带"
+          >
+            ◀◀
+          </button>
+
+          <button
+            type="button"
+            onclick="togglePlayStop()"
+            style="background-color: var(--accent-amber); color: #1d140c;"
+            class="pixel-btn py-2 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <span id="playStopIcon">▶</span>
+            <span id="playStopLabel">播放</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- 状态 B：「说点啥」输入法模式（卡带机折叠为迷你状态条，底部弹出输入法） -->
+      <!-- =================================================================== -->
+      <div id="replyInputConsole" class="hidden p-2.5 space-y-2">
+        <div class="flex items-center justify-between gap-2 px-0.5">
+          <button
+            type="button"
+            onclick="switchToWalkmanMode()"
+            style="color: var(--accent-amber);"
+            class="text-xs flex items-center gap-1.5 truncate cursor-pointer hover:underline"
+          >
+            <span>📼</span>
+            <span id="miniBarTapeInfo" class="truncate">#01 · 暑假下午两点摇头的电风扇</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="switchToWalkmanMode()"
+            style="background-color: var(--bg-walkman-face); color: var(--text-sub);"
+            class="pixel-btn px-2 py-0.5 text-[11px] shrink-0 cursor-pointer"
+          >
+            切回卡带机 ⌄
+          </button>
+        </div>
+
+        <form onsubmit="handleSendMessage(event)" class="flex items-center gap-2">
+          <div
+            style="background-color: var(--bg-screen); border-color: var(--border-dark);"
+            class="flex-1 border-2 rounded px-3 py-2 flex items-center"
+          >
+            <span style="color: var(--accent-cyan);" class="font-pixel text-[10px] mr-2">&gt;</span>
+            <input
+              id="replyInput"
+              type="text"
+              autocomplete="off"
+              placeholder="讲讲今天的故事，或猜猜刚才那首老歌……"
+              style="color: var(--text-main);"
+              class="w-full bg-transparent text-sm focus:outline-none placeholder:opacity-45"
+            />
+            <button
+              type="button"
+              id="skipBtn"
+              onclick="finishTypingNow()"
+              style="color: var(--accent-amber);"
+              class="hidden font-pixel text-[9px] ml-2 px-1 py-0.5 shrink-0 cursor-pointer"
+            >
+              [快进]
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            style="background-color: var(--accent-cyan); color: #0b1921;"
+            class="pixel-btn px-4 py-2 text-xs font-bold shrink-0 cursor-pointer"
+          >
+            发送 ↵
+          </button>
+        </form>
+      </div>
+    </footer>
+
+    <!-- 极淡扫描线质感 -->
+    <div class="crt-scanlines pointer-events-none absolute inset-0 z-30"></div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 80后集体记忆 · 10首主歌+副歌完整全曲乐谱 + 50盘神秘小磁带数据库
+    // =========================================================================
+    const NOTE_FREQ = {
+      C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, Fs3: 185.00, G3: 196.00, Gs3: 207.65, A3: 220.00, Bb3: 233.08, B3: 246.94,
+      C4: 261.63, Cs4: 277.18, D4: 293.66, Eb4: 311.13, E4: 329.63, F4: 349.23, Fs4: 369.99, G4: 392.00, Gs4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
+      C5: 523.25, Cs5: 554.37, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, Fs5: 739.99, G5: 783.99, Gs5: 830.61, A5: 880.00, Bb5: 932.33, B5: 987.77,
+      C6: 1046.50, R: 0
+    };
+
+    const CORE_FULL_SCORES = {
+      tongnian: {
+        beatSec: 0.25,
+        notes: [
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['G4', 1], ['E4', 0.5], ['A4', 0.5, 'A3'], ['A4', 0.5], ['G4', 0.5],
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['G4', 0.5], ['G4', 0.5], ['A4', 0.5, 'F3'], ['G4', 0.5], ['E4', 0.5], ['D4', 0.5],
+          ['D4', 0.5, 'G3'], ['E4', 0.5], ['E4', 1], ['D4', 0.5], ['G4', 0.5, 'C3'], ['G4', 0.5], ['E4', 0.5],
+          ['D4', 0.5, 'G3'], ['E4', 0.5], ['E4', 0.5], ['E4', 0.5], ['G4', 0.5, 'G3'], ['E4', 0.5], ['D4', 1],
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['G4', 1], ['E4', 0.5], ['A4', 0.5, 'A3'], ['A4', 0.5], ['G4', 0.5],
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['G4', 0.5], ['G4', 0.5], ['A4', 0.5, 'F3'], ['C5', 0.5], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 0.5, 'F3'], ['C5', 0.5], ['C5', 1], ['A4', 0.5, 'C3'], ['G4', 0.5], ['G4', 1],
+          ['E4', 0.5, 'G3'], ['G4', 0.5], ['A4', 0.5], ['G4', 0.5], ['E4', 0.5, 'C3'], ['D4', 0.5], ['C4', 1.5], ['R', 0.5],
+          ['C5', 0.5, 'F3'], ['C5', 0.5], ['C5', 0.5], ['C5', 0.5], ['D5', 0.5, 'G3'], ['C5', 0.5], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 0.5, 'C3'], ['C5', 0.5], ['C5', 0.5], ['C5', 0.5], ['D5', 0.5, 'G3'], ['C5', 0.5], ['A4', 1],
+          ['C5', 0.5, 'F3'], ['C5', 0.5], ['C5', 0.5], ['C5', 0.5], ['D5', 0.5, 'G3'], ['C5', 0.5], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 0.5, 'A3'], ['A4', 0.5], ['A4', 0.5], ['G4', 0.5], ['E4', 0.5, 'G3'], ['D4', 0.5], ['C4', 1.5], ['R', 0.5],
+          ['G4', 0.5, 'C3'], ['A4', 0.5], ['C5', 1], ['G4', 0.5, 'E3'], ['A4', 0.5], ['C5', 1],
+          ['D5', 0.5, 'F3'], ['D5', 0.5], ['D5', 0.5], ['C5', 0.5], ['A4', 0.5, 'G3'], ['G4', 0.5], ['A4', 1],
+          ['A4', 0.5, 'F3'], ['C5', 0.5], ['C5', 1], ['A4', 0.5, 'C3'], ['G4', 0.5], ['G4', 1],
+          ['E4', 0.5, 'G3'], ['G4', 0.5], ['A4', 0.5], ['G4', 0.5], ['E4', 0.5, 'C3'], ['D4', 0.5], ['C4', 2.5]
+        ]
+      },
+      tongzhuo: {
+        beatSec: 0.28,
+        notes: [
+          ['G4', 0.5, 'C3'], ['G4', 0.5], ['G4', 0.5], ['G4', 0.5], ['E4', 0.5, 'G3'], ['F4', 0.5], ['G4', 0.5], ['B4', 0.5], ['A4', 2],
+          ['A4', 0.5, 'F3'], ['A4', 0.5], ['A4', 0.5], ['A4', 0.5], ['F4', 0.5, 'C3'], ['G4', 0.5], ['A4', 0.5], ['A4', 0.5], ['G4', 2],
+          ['G4', 0.5, 'C3'], ['G4', 0.5], ['G4', 0.5], ['G4', 0.5], ['E4', 0.5, 'E3'], ['F4', 0.5], ['G4', 0.5], ['C5', 0.5], ['B4', 2],
+          ['B4', 0.5, 'G3'], ['B4', 0.5], ['B4', 0.5], ['B4', 0.5], ['A4', 0.5, 'G3'], ['G4', 0.5], ['F4', 0.5], ['D4', 0.5], ['C4', 2],
+          ['E5', 0.5, 'C3'], ['E5', 0.5], ['E5', 0.5], ['E5', 0.5], ['D5', 0.5, 'G3'], ['C5', 0.5], ['B4', 0.5], ['C5', 0.5], ['D5', 2],
+          ['D5', 0.5, 'G3'], ['D5', 0.5], ['D5', 0.5], ['D5', 0.5], ['C5', 0.5, 'F3'], ['B4', 0.5], ['A4', 0.5], ['B4', 0.5], ['C5', 2],
+          ['C5', 0.5, 'A3'], ['C5', 0.5], ['C5', 0.5], ['C5', 0.5], ['B4', 0.5, 'F3'], ['A4', 0.5], ['G4', 0.5], ['A4', 0.5], ['B4', 2],
+          ['B4', 0.5, 'G3'], ['B4', 0.5], ['B4', 0.5], ['B4', 0.5], ['A4', 0.5, 'G3'], ['G4', 0.5], ['F4', 0.5], ['D4', 0.5], ['C4', 2.5]
+        ]
+      },
+      penghuwan: {
+        beatSec: 0.24,
+        notes: [
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['A4', 0.5], ['G4', 0.5], ['E5', 1, 'C3'], ['D5', 0.5], ['C5', 0.5],
+          ['A4', 0.5, 'F3'], ['C5', 0.5], ['D5', 0.5], ['C5', 0.5], ['A4', 1, 'C3'], ['G4', 1],
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['A4', 0.5], ['G4', 0.5], ['E5', 1, 'A3'], ['D5', 0.5], ['C5', 0.5],
+          ['D5', 0.5, 'D3'], ['D5', 0.5], ['C5', 0.5], ['A4', 0.5], ['D5', 2, 'G3'],
+          ['E5', 0.5, 'C3'], ['E5', 0.5], ['E5', 0.5], ['D5', 0.5], ['C5', 1, 'A3'], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 0.5, 'F3'], ['C5', 0.5], ['D5', 0.5], ['C5', 0.5], ['A4', 2, 'C3'],
+          ['E5', 1, 'C3'], ['G5', 1], ['E5', 1, 'A3'], ['C5', 1],
+          ['D5', 0.5, 'F3'], ['C5', 0.5], ['A4', 0.5], ['C5', 0.5], ['D5', 2, 'G3'],
+          ['E5', 0.5, 'C3'], ['E5', 0.5], ['D5', 0.5], ['C5', 0.5], ['A4', 1, 'F3'], ['G4', 1],
+          ['A4', 0.5, 'G3'], ['C5', 0.5], ['D5', 0.5], ['E5', 0.5], ['C5', 2.5, 'C3']
+        ]
+      },
+      shuishou: {
+        beatSec: 0.25,
+        notes: [
+          ['E4', 0.5, 'A3'], ['A4', 0.5], ['B4', 0.5], ['C5', 1], ['B4', 0.5], ['A4', 0.5], ['E4', 0.5],
+          ['F4', 0.5, 'F3'], ['A4', 0.5], ['C5', 1], ['B4', 0.5], ['A4', 0.5], ['G4', 1],
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['A4', 0.5], ['G4', 1], ['E4', 0.5], ['D4', 0.5], ['C4', 0.5],
+          ['D4', 0.5, 'G3'], ['E4', 0.5], ['G4', 0.5], ['A4', 0.5], ['E4', 2, 'A3'],
+          ['E5', 0.5, 'A3'], ['E5', 0.5], ['E5', 1], ['D5', 0.5, 'G3'], ['C5', 0.5], ['B4', 0.5], ['A4', 0.5],
+          ['C5', 0.5, 'F3'], ['C5', 0.5], ['C5', 1], ['B4', 0.5, 'C3'], ['A4', 0.5], ['G4', 1],
+          ['A4', 0.5, 'F3'], ['C5', 0.5], ['D5', 1], ['C5', 0.5, 'C3'], ['A4', 0.5], ['G4', 1],
+          ['E4', 0.5, 'G3'], ['G4', 0.5], ['A4', 0.5], ['B4', 0.5], ['A4', 2.5, 'A3']
+        ]
+      },
+      houlai: {
+        beatSec: 0.27,
+        notes: [
+          ['E4', 0.5, 'C3'], ['G4', 0.5], ['A4', 1.5], ['G4', 0.5], ['A4', 0.5, 'A3'], ['C5', 0.5], ['B4', 1.5], ['G4', 0.5],
+          ['F4', 0.5, 'F3'], ['A4', 0.5], ['G4', 1], ['E4', 0.5], ['D4', 0.5, 'G3'], ['E4', 0.5], ['D4', 1.5],
+          ['G4', 0.5, 'C3'], ['E5', 1.5], ['D5', 0.5, 'G3'], ['C5', 0.5], ['B4', 0.5], ['C5', 0.5], ['D5', 1.5], ['G4', 0.5],
+          ['F4', 0.5, 'F3'], ['D5', 1.5], ['C5', 0.5, 'C3'], ['B4', 0.5], ['A4', 0.5], ['B4', 0.5], ['C5', 2.5, 'C3']
+        ]
+      },
+      haikuotiankong: {
+        beatSec: 0.27,
+        notes: [
+          ['G4', 0.5, 'C3'], ['A4', 0.5], ['C5', 1.5], ['A4', 0.5, 'G3'], ['G4', 0.5], ['E4', 0.5], ['D4', 0.5], ['E4', 1.5],
+          ['G4', 0.5, 'A3'], ['A4', 0.5], ['C5', 1], ['D5', 0.5], ['C5', 0.5], ['A4', 0.5, 'F3'], ['G4', 0.5], ['A4', 1.5],
+          ['C5', 0.5, 'C3'], ['D5', 0.5], ['E5', 1.5], ['D5', 0.5, 'G3'], ['C5', 0.5], ['A4', 0.5], ['G4', 0.5], ['A4', 1], ['C5', 0.5], ['D5', 1],
+          ['C5', 0.5, 'A3'], ['D5', 0.5], ['E5', 1], ['G5', 1, 'E3'], ['E5', 0.5], ['D5', 0.5], ['C5', 2.5, 'C3']
+        ]
+      },
+      qingtian: {
+        beatSec: 0.25,
+        notes: [
+          ['G4', 0.5, 'C3'], ['E4', 0.5], ['G4', 0.5], ['C5', 1], ['B4', 0.5, 'G3'], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 0.5, 'A3'], ['G4', 0.5], ['E4', 0.5], ['C4', 1], ['D4', 0.5, 'F3'], ['E4', 0.5], ['G4', 0.5],
+          ['E5', 0.5, 'C3'], ['D5', 0.5], ['C5', 0.5], ['B4', 0.5], ['C5', 1, 'A3'], ['G4', 1],
+          ['A4', 0.5, 'F3'], ['B4', 0.5], ['C5', 0.5], ['D5', 0.5], ['C5', 2.5, 'C3']
+        ]
+      },
+      lanspirits: {
+        beatSec: 0.22,
+        notes: [
+          ['C4', 0.5, 'C3'], ['F4', 1], ['F4', 0.5], ['G4', 0.5, 'C3'], ['A4', 0.5], ['Bb4', 0.5], ['G4', 0.5],
+          ['A4', 1, 'F3'], ['F4', 1], ['C4', 1, 'C3'], ['R', 1],
+          ['D5', 1, 'Bb3'], ['Bb4', 0.5], ['D5', 0.5], ['C5', 1, 'F3'], ['A4', 1],
+          ['Bb4', 1, 'C3'], ['G4', 0.5], ['Bb4', 0.5], ['F4', 2, 'F3']
+        ]
+      },
+      pingfan: {
+        beatSec: 0.26,
+        notes: [
+          ['E4', 0.5, 'A3'], ['A4', 0.5], ['B4', 0.5], ['C5', 1.5], ['B4', 0.5, 'F3'], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 1.5, 'C3'], ['E4', 0.5], ['G4', 1, 'G3'], ['E4', 1],
+          ['E5', 0.5, 'A3'], ['E5', 0.5], ['D5', 0.5], ['C5', 1], ['D5', 0.5, 'F3'], ['C5', 0.5], ['B4', 0.5],
+          ['C5', 0.5, 'C3'], ['C5', 0.5], ['B4', 0.5], ['A4', 1], ['E4', 2.5, 'A3']
+        ]
+      },
+      yueliang: {
+        beatSec: 0.28,
+        notes: [
+          ['G4', 0.5, 'C3'], ['C5', 1.5], ['E5', 0.5, 'E3'], ['G5', 1.5], ['E5', 0.5, 'A3'], ['C5', 1], ['A4', 0.5], ['G4', 0.5],
+          ['A4', 1.5, 'F3'], ['C5', 0.5], ['A4', 1], ['G4', 2, 'C3'],
+          ['E5', 0.5, 'C3'], ['G5', 1.5], ['E5', 0.5, 'A3'], ['C5', 1.5], ['A4', 0.5, 'F3'], ['C5', 1], ['D5', 0.5], ['B4', 0.5], ['C5', 3, 'C3']
+        ]
+      }
+    };
+
+    const STICKER_THEMES = [
+      { bg: '#f6e7cb', text: '#241b15' },
+      { bg: '#cdeac0', text: '#162618' },
+      { bg: '#bde0fe', text: '#132238' },
+      { bg: '#ffd6a5', text: '#2b190d' },
+      { bg: '#ffc8dd', text: '#2e1320' },
+      { bg: '#e2ece9', text: '#1a2421' }
+    ];
+
+    const OTHER_SONG_HINTS = [
+      { keywords: ['七里香', '东风破', '稻香', '简单爱', '双截棍', '夜曲'], name: '周杰伦的老歌', vibe: '夏天的晚风和青春里的某个人' },
+      { keywords: ['光辉岁月', '真的爱你', '喜欢你', '不再犹豫'], name: 'Beyond 的粤语金曲', vibe: '二十岁那年不肯低头的少年气' },
+      { keywords: ['星星点灯', '大国民', '年轻时代'], name: '郑智化的励志老歌', vibe: '在黑夜里给自己点一盏灯的倔强' },
+      { keywords: ['白桦林', '那些花儿', '生如夏花'], name: '朴树的校园民谣', vibe: '干净又带点淡淡忧伤的旧时光' },
+      { keywords: ['很爱很爱你', '成全', '一辈子的孤单'], name: '奶茶刘若英的情歌', vibe: '心里藏了很久却没说出口的温柔' },
+      { keywords: ['恋曲1990', '光阴的故事', '鹿港小镇'], name: '罗大佑的时代金曲', vibe: '翻看老相册时那股浓浓的怀旧味' }
+    ];
+
+    // 50 盘神秘怀旧磁带（隐藏真实歌名，内置【第一轮歌词/画面提醒】与【极简留白邀请话术】）
+    const MYSTERY_TAPES = [
+      {
+        no: '01',
+        clue: '暑假下午两点摇头的电风扇，知了在树上叫',
+        scoreKey: 'tongnian',
+        answer: '《童年》（罗大佑）',
+        hint: '这首歌开头唱着“池塘边的榕树上，知了在声声叫着夏天”，是一位戴墨镜的台湾音乐教父写给所有大人的歌',
+        keywords: ['童年', '罗大佑', '榕树', '秋千', '知了'],
+        hooks: [
+          '听着这段老调子，你心里有什么想回忆的、或者想跟老伙计说的，随便讲讲就行，我在这儿听着。',
+          '这旋律一出来，仿佛又回到那个慢悠悠的夏天。顺着这调子，你要是想起了什么人、什么旧事，跟我说说都行。'
+        ]
+      },
+      {
+        no: '02',
+        clue: '晚自习校服袖子里的单边耳机与毕业同学录',
+        scoreKey: 'tongzhuo',
+        answer: '《同桌的你》（老狼）',
+        hint: '歌词里写着“明天你是否会想起，昨天你写的日记”，当年校园民谣最具代表性的一首吉他弹唱',
+        keywords: ['同桌', '老狼', '高晓松', '日记', '毕业'],
+        hooks: [
+          '这调子一响，学生时代的画面一下子就浮出来了。你要是想起了哪位老同学、或者哪段旧时光，尽管跟我讲讲。',
+          '老歌最容易勾出心底的念想，听着这首，你心里有什么想聊的，树洞都安静听着呢。'
+        ]
+      },
+      {
+        no: '03',
+        clue: '夏夜搬个小竹椅在院子里摇蒲扇看银河',
+        scoreKey: 'penghuwan',
+        answer: '《外婆的澎湖湾》（潘安邦）',
+        hint: '副歌唱着“阳光、沙滩、海浪、仙人掌，还有一位老船长”，当年小学音乐课本和磁带里循环最多的一首',
+        keywords: ['澎湖湾', '外婆', '潘安邦', '海浪', '仙人掌'],
+        hooks: [
+          '多干净轻快的调子，听着就像晚风吹过老院子。顺着这段旋律，有什么想跟我分享的故事，慢慢说就行。',
+          '这首歌一放出来，整个播音室都暖和了。你心里要是装了什么想说的话，我就在这儿陪你。'
+        ]
+      },
+      {
+        no: '04',
+        clue: '深夜加班回家，在楼下车里坐了五分钟没熄火',
+        scoreKey: 'shuishou',
+        answer: '《水手》（郑智化）',
+        hint: '副歌那句“他说风雨中这点痛算什么，擦干泪不要怕，至少我们还有梦”，当年男生在操场上最爱吼的一首',
+        keywords: ['水手', '郑智化', '风雨', '擦干泪'],
+        hooks: [
+          '咱们这代人白天在外面习惯把情绪调成静音，深夜在这儿不用端着。最近心里要是扛了什么事，跟老伙计讲讲吧。',
+          '前奏一响还是很有力量，不过在树洞里不用硬撑，你最近过得怎么样、遇到什么事，想说什么我都听着。'
+        ]
+      },
+      {
+        no: '05',
+        clue: '十七岁那年夏天晚风里的白花瓣与未寄出的信',
+        scoreKey: 'houlai',
+        answer: '《后来》（刘若英）',
+        hint: '副歌唱到“栀子花，白花瓣，落在我蓝色百褶裙上”，奶茶刘若英在 KTV 里一开口就能让人眼眶湿润的那首',
+        keywords: ['后来', '刘若英', '栀子花', '错过'],
+        hooks: [
+          '有些旋律一响，心口就会轻轻动一下。听着这首歌，你心里要是浮出了什么人或往事，愿意讲给我听吗？',
+          '不急，慢慢顺着这调子想一想，有什么想说的、或者今天遇到的事，跟我聊聊都行。'
+        ]
+      },
+      {
+        no: '06',
+        clue: '雪夜街灯下哈出一口白气，想起二十岁的少年',
+        scoreKey: 'haikuotiankong',
+        answer: '《海阔天空》（Beyond）',
+        hint: '副歌是全网男人微醺时必吼的粤语金曲——“原谅我这一生不羁放纵爱自由，也会怕有一天会跌倒”',
+        keywords: ['海阔天空', 'beyond', '黄家驹', '不羁放纵', '自由'],
+        hooks: [
+          '不管走多远，听见这首歌还是会心头一热。今晚在这个安静的角落，你心里有什么想倾诉的，随便跟我说说。',
+          '这首老歌陪咱们走过太多路了，听着它，你最近有什么感慨或者经历，我在这儿听你讲。'
+        ]
+      },
+      {
+        no: '07',
+        clue: '放学路上刮风下雨，躲在屋檐下等雨停的黄昏',
+        scoreKey: 'qingtian',
+        answer: '《晴天》（周杰伦）',
+        hint: '开头唱着“故事的小黄花，从出生那年就飘着”，千禧年初几乎每个男生女生歌词本第一页都会抄的周氏情歌',
+        keywords: ['晴天', '周杰伦', '刮风', '翘课', '花落'],
+        hooks: [
+          '前奏几个音符一出来，青春里的画面就全回来了。听着这调子，你有什么想回忆的、或者今天想聊的事，尽管开口。',
+          '就像当年把单边耳机分给同桌一样，今晚这首歌分你一半，你心里有什么故事，讲给老伙计听听。'
+        ]
+      },
+      {
+        no: '08',
+        clue: '六点半准时守在黑白电视机前等开播的蓝色小人',
+        scoreKey: 'lanspirits',
+        answer: '《蓝精灵之歌》',
+        hint: '“在那山的那边海的那边，有一群蓝精灵，他们活泼又聪明”，他们住在大蘑菇里，天天跟格格巫和阿兹猫斗智斗勇',
+        keywords: ['蓝精灵', '格格巫', '山的那边', '海的那边'],
+        hooks: [
+          '一听见这调子，感觉整个人都变回那个无忧无虑的小孩了。顺着这份轻松，今晚有什么想跟我聊聊的吗？',
+          '老动画片的旋律最治愈了，不管今天外面有多忙，这会儿只管挑你最想说的事跟我讲讲。'
+        ]
+      },
+      {
+        no: '09',
+        clue: '一个人开夜车穿过跨江大桥，路灯一盏盏往后退',
+        scoreKey: 'pingfan',
+        answer: '《平凡之路》（朴树）',
+        hint: '副歌唱到“我曾经跨过山和大海，也穿过人山人海”，朴树时隔多年归来写给所有赶路人的那一首',
+        keywords: ['平凡之路', '朴树', '跨过山和大海', '人山人海'],
+        hooks: [
+          '这首歌特别适合夜深人静的时候听，像陪着每个赶路的人歇歇脚。你最近心里装了什么事，跟树洞说说吧。',
+          '跨过山和大海之后，能在深夜找个地方说说话挺难得的。想聊点什么，我都听着。'
+        ]
+      },
+      {
+        no: '10',
+        clue: '中秋夜阳台上切开双黄莲蓉月饼，抬头看满月',
+        scoreKey: 'yueliang',
+        answer: '《月亮代表我的心》（邓丽君）',
+        hint: '“你问我爱你有多深，我爱你有几分”，当年父母那辈双卡录音机里单曲循环最多的一首经典老歌',
+        keywords: ['月亮代表我的心', '邓丽君', '月亮'],
+        hooks: [
+          '这旋律温柔得像老屋里的灯光，听着它，你要是想起了家人、老友或者今天的某件小事，随便跟我讲讲。',
+          '老歌的温柔就在于不催不赶，你心里有什么想慢慢道来的故事，我就在这儿听着。'
+        ]
+      },
+      { no: '11', clue: '小卖部冰柜里两毛钱一根的橘子味冰袋', scoreKey: 'tongnian', answer: '《童年》（罗大佑）', hint: '歌里唱着“等待着下课，等待着放学，等待游戏的童年”，罗大佑的经典之作', keywords: ['童年', '罗大佑'], hooks: ['听着这段老调子，你心里有什么想回忆的、或者想跟老伙计说的，随便讲讲就行。'] },
+      { no: '12', clue: '用铅笔插进卡带齿轮里咔哒咔哒手动倒带', scoreKey: 'tongzhuo', answer: '《同桌的你》（老狼）', hint: '“谁娶了多愁善感的你，谁看了你的日记”，老狼唱红大江南北的校园民谣', keywords: ['同桌', '老狼'], hooks: ['老磁带的声音一出来，很多旧时光就跟着浮上来了。你想聊点什么，我都在这儿听着。'] },
+      { no: '13', clue: '暑假作业最后一天晚上全家总动员疯狂补写', scoreKey: 'tongnian', answer: '《童年》（罗大佑）', hint: '“总是要等到睡觉以前，才知道功课只做了一点点”，是不是瞬间有画面了？', keywords: ['童年', '罗大佑'], hooks: ['这调子一响就让人忍不住笑出来。顺着这份轻松，你今天有什么想跟我分享的事吗？'] },
+      { no: '14', clue: '操场单杠旁偷偷递过去的一张折叠纸条', scoreKey: 'qingtian', answer: '《晴天》（周杰伦）', hint: '“刮风这天，我试过握着你手，但偏偏雨渐渐大到我看你不见”', keywords: ['晴天', '周杰伦'], hooks: ['听着这段旋律，你心里要是浮出了哪段记忆或者今天遇到的事，随便讲给我听听。'] },
+      { no: '15', clue: '第一次离家去外地上大学，绿皮火车开动那一刻', scoreKey: 'shuishou', answer: '《水手》（郑智化）', hint: '“总是靠一点酒精的麻醉，才能够睡去……他说风雨中这点痛算什么”', keywords: ['水手', '郑智化'], hooks: ['一路走到今天不容易，今晚在树洞电台里，你心里有什么想倾诉的，慢慢说就行。'] },
+      { no: '16', clue: '校门口五毛钱一包的干脆面与集不齐的水浒卡', scoreKey: 'lanspirits', answer: '《蓝精灵之歌》', hint: '“他们齐心合力开动脑筋，斗败了格格巫”，动画片里的经典主题曲', keywords: ['蓝精灵'], hooks: ['简单的调子最能让人卸下防备，你今晚想跟老伙计聊聊什么，我都听着。'] },
+      { no: '17', clue: '高中宿舍熄灯后，躲在被窝里打手电筒看小说', scoreKey: 'houlai', answer: '《后来》（刘若英）', hint: '“后来，我总算学会了如何去爱，可惜你早已远去，消失在人海”', keywords: ['后来', '刘若英'], hooks: ['这首歌一响，心底那些平时不怎么提的念想就安静地冒出来了。想说什么跟我讲讲吧。'] },
+      { no: '18', clue: 'KTV 里男人喝到微醺时必点的粤语大合唱', scoreKey: 'haikuotiankong', answer: '《海阔天空》（Beyond）', hint: '“今天我，寒夜里看雪飘过，怀着冷却了的心窝漂远方”，Beyond 最经典的灵魂之作', keywords: ['海阔天空', 'beyond', '黄家驹'], hooks: ['听着这首歌，心里那股热乎气还在。你最近有什么经历或者感慨，跟老伙计说说。'] },
+      { no: '19', clue: '外婆家门前晒满桂花干的竹匾与老井水', scoreKey: 'penghuwan', answer: '《外婆的澎湖湾》（潘安邦）', hint: '“晚风轻拂澎湖湾，白浪逐沙滩，没有椰林缀斜阳，只是一片海蓝蓝”', keywords: ['澎湖湾', '外婆'], hooks: ['温暖的老调子最适合夜里听，你心里有什么想回忆的、或者今天遇到的人和事，慢慢讲给我听。'] },
+      { no: '20', clue: '三十五岁生日吹完蜡烛，手机里却没几条长信息', scoreKey: 'pingfan', answer: '《平凡之路》（朴树）', hint: '“我曾经失落失望失掉所有方向，直到看见平凡才是唯一的答案”', keywords: ['平凡之路', '朴树'], hooks: ['大人世界里的很多话平时没处说，今晚这个树洞就是你的，想讲什么都行。'] },
+      { no: '21', clue: '周二下午电视机突然出现的彩色圆形测试卡', scoreKey: 'tongnian', answer: '《童年》（罗大佑）', hint: '“黑板上老师的粉笔，还在拼命叽叽喳喳写个不停”，罗大佑把童年写活了的那首', keywords: ['童年', '罗大佑'], hooks: ['这旋律一响就把人拉回慢悠悠的旧时光了。你今晚有什么想跟我聊聊的，随便开口。'] },
+      { no: '22', clue: '毕业散伙饭那天，平时最严肃的班主任红了眼眶', scoreKey: 'tongzhuo', answer: '《同桌的你》（老狼）', hint: '“那时候天总是很蓝，日子总过得太慢，你总说毕业遥遥无期，转眼就各奔东西”', keywords: ['同桌', '老狼'], hooks: ['听着这首歌，要是想起了哪位老朋友、或者最近发生的事，我都安静听着。'] },
+      { no: '23', clue: '二八大杠自行车后座上载着书包与晚霞', scoreKey: 'yueliang', answer: '《月亮代表我的心》（邓丽君）', hint: '“轻轻的一个吻，已经打动我的心，深深的一段情，叫我思念到如今”', keywords: ['月亮代表我的心', '邓丽君'], hooks: ['温柔的老旋律最懂人心，你心里有什么想说的话，慢慢道来就行。'] },
+      { no: '24', clue: '凌晨两点改完最后一版方案，窗外环卫车刚经过', scoreKey: 'shuishou', answer: '《水手》（郑智化）', hint: '“苦涩的沙，吹痛脸庞的感觉，像父亲的责骂，母亲的哭泣，永远难忘记”', keywords: ['水手', '郑智化'], hooks: ['忙完一天到这会儿终于能喘口气了，心里有什么想倒出来的，树洞都接着。'] },
+      { no: '25', clue: '音像店玻璃柜台前攒零花钱买的第一盘正版卡带', scoreKey: 'qingtian', answer: '《晴天》（周杰伦）', hint: '“为你翘课的那一天，花落的那一天，教室的那一间，我怎么看不见”', keywords: ['晴天', '周杰伦'], hooks: ['这调子一出来就有画面了。听着它，你有什么想讲的故事，尽管跟我说。'] },
+      { no: '26', clue: '巷子口爆米花机“砰”一声巨响冒出的白烟', scoreKey: 'lanspirits', answer: '《蓝精灵之歌》', hint: '“哦，可爱的蓝精灵，哦，可爱的蓝精灵”，一听前奏就能跟着打拍子的儿歌', keywords: ['蓝精灵'], hooks: ['听着这轻快的曲子，心情也跟着松快不少。你今晚想跟老伙计聊点什么？'] },
+      { no: '27', clue: '老照片里穿着海军衫在公园假山前的合影', scoreKey: 'penghuwan', answer: '《外婆的澎湖湾》（潘安邦）', hint: '“脚印两对半，那是外婆拄着杖将我手轻轻挽”，温暖得像老照片一样的旋律', keywords: ['澎湖湾', '外婆'], hooks: ['老旋律就像翻开旧相册，顺着它，你心里有什么想说的，我都听着。'] },
+      { no: '28', clue: '多年后在街头偶遇初恋，只笑着点了点头擦肩而过', scoreKey: 'houlai', answer: '《后来》（刘若英）', hint: '“如果当时我们能不那么倔强，现在也不那么遗憾”', keywords: ['后来', '刘若英'], hooks: ['有些故事留在心里很久了，今晚你要是愿意讲一讲，老伙计就在这儿陪你。'] },
+      { no: '29', clue: '初入职场租在六楼无电梯老小区里的第一盏台灯', scoreKey: 'haikuotiankong', answer: '《海阔天空》（Beyond）', hint: '“多少次，迎着冷眼与嘲笑，从未有放弃过心中的理想”', keywords: ['海阔天空', 'beyond'], hooks: ['一路走过来经历了不少事吧，今晚不用急，想从哪一段讲起都行。'] },
+      { no: '30', clue: '送完孩子上学独自坐在早餐店喝一碗热豆浆', scoreKey: 'pingfan', answer: '《平凡之路》（朴树）', hint: '“向前走，就这么走，就算你被给过什么；向前走，就这么走，就算你被夺走什么”', keywords: ['平凡之路', '朴树'], hooks: ['平平淡淡的日子里也藏着好多故事，你今天过得怎么样，跟我说说吧。'] },
+      { no: '31', clue: '铁皮文具盒里印着乘法口诀表与带香味的橡皮', scoreKey: 'tongnian', answer: '《童年》（罗大佑）', hint: '“福利社里面什么都有，就是口袋里没有半毛钱”，罗大佑写尽小学生活的经典', keywords: ['童年', '罗大佑'], hooks: ['这调子一响，童年的画面就全冒出来了。你想起什么或者今天遇到什么事，讲给我听听。'] },
+      { no: '32', clue: '大学阶梯教室最后一排一起传看的一本金庸小说', scoreKey: 'tongzhuo', answer: '《同桌的你》（老狼）', hint: '“老师们早已想不起，猜不出问题的你，我也是偶然翻相片，才想起同桌的你”', keywords: ['同桌', '老狼'], hooks: ['听着这首校园老歌，你心里有什么想回忆或者倾诉的，随便跟我聊聊。'] },
+      { no: '33', clue: '冬夜炉子上烤得滋滋冒油的红薯与橘子皮', scoreKey: 'yueliang', answer: '《月亮代表我的心》（邓丽君）', hint: '“你去想一想，你去看一看，月亮代表我的心”，温柔到骨子里的老旋律', keywords: ['月亮代表我的心', '邓丽君'], hooks: ['这旋律听着心里暖洋洋的，你有什么想跟我说的故事，慢慢讲就行。'] },
+      { no: '34', clue: '暴雨天没带伞，淋着雨跑回家的那股少年气', scoreKey: 'shuishou', answer: '《水手》（郑智化）', hint: '“擦干泪不要问，为什么”——郑智化用沙哑嗓音唱出无数人的倔强', keywords: ['水手', '郑智化'], hooks: ['听着这首歌，心里那股劲儿又回来了。最近有什么想跟老伙计倾诉的事吗？'] },
+      { no: '35', clue: '午休时趴在课桌上，阳光透过窗帘照在手臂上的绒毛', scoreKey: 'qingtian', answer: '《晴天》（周杰伦）', hint: '“刮风这天，我试过握着你手……还要多久我才能在你身边”', keywords: ['晴天', '周杰伦'], hooks: ['前奏一响就像回到那个安静的午后，你心里有什么想聊的，树洞都听着。'] },
+      { no: '36', clue: '寒假里攒了一整年的压岁钱却被爸妈“先帮你存着”', scoreKey: 'lanspirits', answer: '《蓝精灵之歌》', hint: '“他们唱歌跳舞快乐多欢喜”——听完心情立马变晴朗的童年神曲', keywords: ['蓝精灵'], hooks: ['哈哈，这旋律一听就让人开心。今晚有什么想跟老伙计分享的，尽管说。'] },
+      { no: '37', clue: '夏夜停电时全楼邻居搬凳子坐到大槐树下聊天', scoreKey: 'penghuwan', answer: '《外婆的澎湖湾》（潘安邦）', hint: '“直到夜色吞没我俩在回家的路上”，满满都是老邻里温情的旋律', keywords: ['澎湖湾', '外婆'], hooks: ['这调子像夏夜的凉风一样舒服，你想聊点什么往事或者近况，我都听着。'] },
+      { no: '38', clue: '旧书箱底翻出一张早就褪色的电影票根', scoreKey: 'houlai', answer: '《后来》（刘若英）', hint: '“有些人一旦错过就不再”——每句歌词都像在翻一本旧日记', keywords: ['后来', '刘若英'], hooks: ['听着这段旋律，要是勾起了你哪段记忆，愿意讲给老伙计听听吗？'] },
+      { no: '39', clue: '第一次拿到工资给爸妈买礼物时的那份小骄傲', scoreKey: 'haikuotiankong', answer: '《海阔天空》（Beyond）', hint: '“仍然自由自我，永远高唱我歌，走遍千里”，Beyond 写给理想与初心的赞歌', keywords: ['海阔天空', 'beyond'], hooks: ['这首歌里藏着咱们这代人的很多故事，你今晚想从哪说起都行。'] },
+      { no: '40', clue: '高铁靠窗座位上戴着降噪耳机看窗外掠过的田野', scoreKey: 'pingfan', answer: '《平凡之路》（朴树）', hint: '“我曾经毁了我的一切，只想永远地离开；我曾经堕入无边黑暗，想挣扎无法自拔”', keywords: ['平凡之路', '朴树'], hooks: ['赶路赶久了，总需要一个安静的角落歇歇脚。你想说什么，我都听着。'] },
+      { no: '41', clue: '学校广播站每天下午放学准时响起的铃声与播音', scoreKey: 'tongnian', answer: '《童年》（罗大佑）', hint: '“一天又一天，一年又一年，迷迷糊糊的童年”，每句都能跟着哼出来', keywords: ['童年', '罗大佑'], hooks: ['熟悉的旋律最容易打开话匣子，你心里有什么想聊的，随便说说就行。'] },
+      { no: '42', clue: '校服后背上用中性笔互相签满名字的六月', scoreKey: 'tongzhuo', answer: '《同桌的你》（老狼）', hint: '“你从前总是很小心，问我借半块橡皮，你也曾无意中说起，喜欢和我在一起”', keywords: ['同桌', '老狼'], hooks: ['听着这首歌，你心里要是想起了谁或者哪段故事，我就在这儿安静听着。'] },
+      { no: '43', clue: '老式双缸洗衣机嗡嗡转动的周末午后', scoreKey: 'yueliang', answer: '《月亮代表我的心》（邓丽君）', hint: '“我的情也真，我的爱也真，月亮代表我的心”', keywords: ['月亮代表我的心', '邓丽君'], hooks: ['老调子一转起来，时间都变慢了。你今晚有什么想跟老伙计讲的，慢慢说。'] },
+      { no: '44', clue: '医院走廊里陪父母排队拿化验单的那个清晨', scoreKey: 'shuishou', answer: '《水手》（郑智化）', hint: '“他说风雨中这点痛算什么，擦干泪不要问为什么”', keywords: ['水手', '郑智化'], hooks: ['咱们这代人肩上扛着不少事，心里要是有什么想倾诉的，树洞都接着。'] },
+      { no: '45', clue: '晚自习停电全班突然爆发的欢呼与口哨声', scoreKey: 'qingtian', answer: '《晴天》（周杰伦）', hint: '“刮风这天，我试过握着你手……还要多久我才能在你身边”', keywords: ['晴天', '周杰伦'], hooks: ['听着这段旋律，你心里有什么想回忆的、或者今天想说的，随便讲讲就行。'] },
+      { no: '46', clue: '小霸王学习机卡带吹两口气才能插进卡槽的仪式感', scoreKey: 'lanspirits', answer: '《蓝精灵之歌》', hint: '“在那山的那边海的那边，有一群蓝精灵”，童年快乐源泉', keywords: ['蓝精灵'], hooks: ['这旋律一响，感觉又回到了小时候。今晚想跟老伙计聊点什么，我都听着。'] },
+      { no: '47', clue: '乡下奶奶家灶膛里柴火噼啪作响与刚出锅的锅巴', scoreKey: 'penghuwan', answer: '《外婆的澎湖湾》（潘安邦）', hint: '“阳光、沙滩、海浪、仙人掌，还有一位老船长”', keywords: ['澎湖湾', '外婆'], hooks: ['温暖的调子最能安抚人心，你心里有什么想说的故事，慢慢讲给我听。'] },
+      { no: '48', clue: '翻看十年前 QQ 空间里那些中二又真诚的说说', scoreKey: 'houlai', answer: '《后来》（刘若英）', hint: '“后来，终于在眼泪中明白，有些人一旦错过就不再”', keywords: ['后来', '刘若英'], hooks: ['听着这首歌，你心里要是浮出了什么往事或情绪，树洞都在这儿听着。'] },
+      { no: '49', clue: '山顶看日出时云海翻涌、第一束金光破云而出', scoreKey: 'haikuotiankong', answer: '《海阔天空》（Beyond）', hint: '“原谅我这一生不羁放纵爱自由”，热泪盈眶的经典旋律', keywords: ['海阔天空', 'beyond'], hooks: ['这调子一响，心里特别敞亮。你最近有什么想跟老伙计聊聊的，尽管说。'] },
+      { no: '50', clue: '今晚深夜 19.82 树洞电台里，只属于你一个人的安静角落', scoreKey: 'pingfan', answer: '《平凡之路》（朴树）', hint: '“我曾经跨过山和大海，也穿过人山人海……直到看见平凡才是唯一的答案”', keywords: ['平凡之路', '朴树', '1982'], hooks: ['这盘压轴磁带留给今晚的你，心里装了什么故事，随时跟阿猫讲讲就行。'] }
+    ].map((item, idx) => ({
+      ...item,
+      stickerBg: STICKER_THEMES[idx % STICKER_THEMES.length].bg,
+      stickerText: STICKER_THEMES[idx % STICKER_THEMES.length].text
+    }));
+
+    const state = {
+      selectedTape: MYSTERY_TAPES[0],
+      pendingGuessTape: null,
+      guessAttemptCount: 0,
+      isEjected: false,
+      isPlaying: false,
+      isReplyMode: false,
+      audioCtx: null,
+      timers: [],
+      isTyping: false,
+      typingTimer: null,
+      finishCallback: null,
+      memoryQueue: [],
+      turnCount: 0
+    };
+
+    // =========================================================================
+    // 2. 16-Bit 机械拟物音效与双声道八音盒合成器（Web Audio API）
+    // =========================================================================
+    function getAudioCtx() {
+      if (!state.audioCtx) {
+        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (state.audioCtx.state === 'suspended') {
+        state.audioCtx.resume();
+      }
+      return state.audioCtx;
+    }
+
+    function playChipBeep(freq = 520, duration = 0.035, type = 'triangle', volume = 0.025) {
+      if (state.isPlaying) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playMechanicalClick(type = 'insert') {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        if (type === 'eject') {
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(420, now + 0.055);
+        } else {
+          osc.frequency.setValueAtTime(380, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.065);
+        }
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.075);
+      } catch (e) {}
+    }
+
+    function playMusicBoxStep(melodyFreq, durSec, bassFreq) {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+
+        if (melodyFreq) {
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(melodyFreq, now);
+
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(melodyFreq * 2, now);
+
+          const release = Math.max(durSec * 2.1, 0.42);
+          gain1.gain.setValueAtTime(0.001, now);
+          gain1.gain.linearRampToValueAtTime(0.08, now + 0.01);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, now + release);
+
+          gain2.gain.setValueAtTime(0.001, now);
+          gain2.gain.linearRampToValueAtTime(0.02, now + 0.006);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, now + release * 0.6);
+
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + release + 0.05);
+          osc2.stop(now + release + 0.05);
+        }
+
+        if (bassFreq) {
+          const bassOsc = ctx.createOscillator();
+          const bassGain = ctx.createGain();
+          bassOsc.type = 'sine';
+          bassOsc.frequency.setValueAtTime(bassFreq, now);
+
+          const bassRelease = Math.max(durSec * 3.0, 0.7);
+          bassGain.gain.setValueAtTime(0.001, now);
+          bassGain.gain.linearRampToValueAtTime(0.04, now + 0.02);
+          bassGain.gain.exponentialRampToValueAtTime(0.0001, now + bassRelease);
+
+          bassOsc.connect(bassGain);
+          bassGain.connect(ctx.destination);
+          bassOsc.start(now);
+          bassOsc.stop(now + bassRelease + 0.05);
+        }
+      } catch (e) {}
+    }
+
+    function stopPlayback() {
+      state.timers.forEach(t => clearTimeout(t));
+      state.timers = [];
+      state.isPlaying = false;
+      updateWalkmanVisuals();
+    }
+
+    function startPlayback() {
+      stopPlayback();
+      const tape = state.selectedTape;
+      const score = CORE_FULL_SCORES[tape.scoreKey] || CORE_FULL_SCORES.tongnian;
+      state.isPlaying = true;
+      updateWalkmanVisuals();
+
+      let elapsed = 45;
+      score.notes.forEach(([n, beats, bass]) => {
+        const dur = beats * score.beatSec;
+        const t = setTimeout(() => {
+          playMusicBoxStep(NOTE_FREQ[n], dur, bass ? NOTE_FREQ[bass] : 0);
+        }, elapsed);
+        state.timers.push(t);
+        elapsed += dur * 1000;
+      });
+
+      const endT = setTimeout(() => {
+        state.isPlaying = false;
+        updateWalkmanVisuals();
+      }, elapsed + 350);
+      state.timers.push(endT);
+    }
+
+    // =========================================================================
+    // 3. 底部 Walkman 卡带仓交互（上方弹出 50 颗小卡带 ⇄ 咔哒装入播放）
+    // =========================================================================
+    function toggleEjectDrawer(forceState) {
+      const next = typeof forceState === 'boolean' ? forceState : !state.isEjected;
+      state.isEjected = next;
+
+      if (next) {
+        stopPlayback();
+        playMechanicalClick('eject');
+      } else {
+        playMechanicalClick('insert');
+      }
+
+      updateWalkmanVisuals();
+      renderTapeShelf();
+    }
+
+    function handleWindowClick() {
+      if (!state.isEjected) {
+        toggleEjectDrawer(true);
+      } else {
+        insertAndPlaySelectedTape();
+      }
+    }
+
+    function previewSelectTape(tapeNo) {
+      const found = MYSTERY_TAPES.find(t => t.no === tapeNo);
+      if (!found) return;
+      state.selectedTape = found;
+      playMechanicalClick('eject');
+      updateWalkmanVisuals();
+      renderTapeShelf();
+    }
+
+    function insertAndPlaySelectedTape() {
+      state.isEjected = false;
+      state.pendingGuessTape = state.selectedTape;
+      state.guessAttemptCount = 0;
+      playMechanicalClick('insert');
+      startPlayback();
+
+      if (state.isTyping) finishTypingNow();
+      const promptLines = [
+        `咔哒——磁带 #${state.selectedTape.no} 装进去啦！听着这段“${state.selectedTape.clue}”的调子，你听出是哪首老歌了吗？猜猜看，或者有什么想聊的跟我说说都行。`,
+        `磁带 #${state.selectedTape.no} 正在转呢！那段老旋律你听出歌名了吗？猜猜看，或者顺着这调子跟我讲讲你想到的事。`
+      ];
+      const msg = promptLines[Math.floor(Math.random() * promptLines.length)];
+      setTimeout(() => {
+        appendHostMessage(msg, false);
+      }, 280);
+    }
+
+    function switchPrevNextTape(delta) {
+      const idx = MYSTERY_TAPES.findIndex(t => t.no === state.selectedTape.no);
+      const nextIdx = (idx + delta + MYSTERY_TAPES.length) % MYSTERY_TAPES.length;
+      state.selectedTape = MYSTERY_TAPES[nextIdx];
+      playMechanicalClick('insert');
+      if (state.isPlaying) {
+        state.pendingGuessTape = state.selectedTape;
+        state.guessAttemptCount = 0;
+        startPlayback();
+      } else {
+        updateWalkmanVisuals();
+      }
+      renderTapeShelf();
+    }
+
+    function togglePlayStop() {
+      if (state.isPlaying) {
+        stopPlayback();
+      } else {
+        state.isEjected = false;
+        state.pendingGuessTape = state.selectedTape;
+        state.guessAttemptCount = 0;
+        playMechanicalClick('insert');
+        startPlayback();
+      }
+    }
+
+    // =========================================================================
+    // 4. 底部双态无缝切换：状态 A（Walkman 卡带机） ⇄ 状态 B（「说点啥」输入法）
+    // =========================================================================
+    function switchToReplyMode() {
+      state.isReplyMode = true;
+      if (state.isEjected) {
+        state.isEjected = false;
+        updateWalkmanVisuals();
+      }
+
+      document.getElementById('walkmanConsole').classList.add('hidden');
+      document.getElementById('replyInputConsole').classList.remove('hidden');
+
+      document.getElementById('miniBarTapeInfo').textContent =
+        `#${state.selectedTape.no} · ${state.selectedTape.clue}${state.isPlaying ? ' (播放中)' : ''}`;
+
+      const input = document.getElementById('replyInput');
+      input.focus();
+      scrollToBottom();
+    }
+
+    function switchToWalkmanMode() {
+      state.isReplyMode = false;
+      const input = document.getElementById('replyInput');
+      if (input) input.blur();
+
+      document.getElementById('replyInputConsole').classList.add('hidden');
+      document.getElementById('walkmanConsole').classList.remove('hidden');
+      updateWalkmanVisuals();
+    }
+
+    function handleChatAreaTap(e) {
+      if (state.isReplyMode && (e.target.id === 'chatScroll' || e.target.id === 'messageList')) {
+        switchToWalkmanMode();
+      }
+    }
+
+    if (window.visualViewport) {
+      let maxViewportHeight = window.visualViewport.height;
+      window.visualViewport.addEventListener('resize', () => {
+        const currentH = window.visualViewport.height;
+        if (currentH > maxViewportHeight) maxViewportHeight = currentH;
+        if (
+          state.isReplyMode &&
+          maxViewportHeight - currentH < 80 &&
+          document.activeElement !== document.getElementById('replyInput')
+        ) {
+          switchToWalkmanMode();
+        }
+      });
+    }
+
+    function updateWalkmanVisuals() {
+      const tape = state.selectedTape;
+      const lidGlass = document.getElementById('cassetteLidGlass');
+      const body = document.getElementById('cassetteBody');
+      const shelf = document.getElementById('ejectedShelfDrawer');
+      const ejectKeyLabel = document.getElementById('ejectKeyLabel');
+      const sticker = document.getElementById('tapeSticker');
+
+      if (state.isEjected) {
+        if (lidGlass) lidGlass.classList.add('ejected');
+        if (body) body.classList.add('ejected');
+        if (shelf) {
+          shelf.classList.remove('rack-closed');
+          shelf.classList.add('rack-open');
+        }
+        if (ejectKeyLabel) ejectKeyLabel.textContent = '⏏ 正在挑选小磁带';
+        const insertBtn = document.getElementById('insertBtnText');
+        if (insertBtn) insertBtn.textContent = `⤵ 咔哒装入小磁带 #${tape.no} 并开始播放`;
+      } else {
+        if (lidGlass) lidGlass.classList.remove('ejected');
+        if (body) body.classList.remove('ejected');
+        if (shelf) {
+          shelf.classList.remove('rack-open');
+          shelf.classList.add('rack-closed');
+        }
+        if (ejectKeyLabel) ejectKeyLabel.textContent = 'EJECT 弹出小磁带';
+      }
+
+      if (sticker) {
+        sticker.style.backgroundColor = tape.stickerBg;
+        sticker.style.color = tape.stickerText;
+      }
+      document.getElementById('tapeSideTag').textContent = `SIDE A · #${tape.no}`;
+      document.getElementById('tapeClueTitle').textContent = tape.clue;
+      document.getElementById('tapeStatusText').textContent = state.isEjected
+        ? '⏏ 舱门已开'
+        : state.isPlaying
+        ? '▶ 齿轮旋转中'
+        : '■ 已入舱 · 点此换带';
+
+      const leftReel = document.getElementById('leftReel');
+      const rightReel = document.getElementById('rightReel');
+      if (state.isPlaying && !state.isEjected) {
+        leftReel.classList.add('reel-spinning');
+        rightReel.classList.add('reel-spinning');
+        document.getElementById('vu1').className = 'w-1 bg-[#7ce8b5] vu-bar-active-1';
+        document.getElementById('vu2').className = 'w-1 bg-[#ffae52] vu-bar-active-2';
+        document.getElementById('vu3').className = 'w-1 bg-[#7ce8b5] vu-bar-active-3';
+        document.getElementById('vu4').className = 'w-1 bg-[#ff7575] vu-bar-active-4';
+        document.getElementById('playStopIcon').textContent = '⏹';
+        document.getElementById('playStopLabel').textContent = '停止';
+      } else {
+        leftReel.classList.remove('reel-spinning');
+        rightReel.classList.remove('reel-spinning');
+        document.getElementById('vu1').className = 'w-1 h-1 bg-[#7ce8b5]';
+        document.getElementById('vu2').className = 'w-1 h-1 bg-[#ffae52]';
+        document.getElementById('vu3').className = 'w-1 h-1 bg-[#7ce8b5]';
+        document.getElementById('vu4').className = 'w-1 h-1 bg-[#ff7575]';
+        document.getElementById('playStopIcon').textContent = '▶';
+        document.getElementById('playStopLabel').textContent = '播放';
+      }
+    }
+
+    function renderTapeShelf() {
+      const shelfEl = document.getElementById('tapeShelfList');
+      if (!shelfEl) return;
+      shelfEl.innerHTML = MYSTERY_TAPES.map(t => {
+        const selected = t.no === state.selectedTape.no;
+        return `
+          <button
+            type="button"
+            onclick="previewSelectTape('${t.no}')"
+            style="background-color: #262b42; border-color: ${selected ? '#ffae52' : '#08070d'};"
+            class="w-32 shrink-0 border-2 rounded-md p-1.5 text-left cursor-pointer transition-all flex flex-col justify-between gap-1.5 ${selected ? '-translate-y-1.5 shadow-xl ring-2 ring-[#ffae52]' : 'opacity-90 hover:opacity-100'}"
+          >
+            <div class="flex items-center justify-between px-0.5 text-[8px] font-pixel text-white/45">
+              <span>•</span>
+              <span>#${t.no}</span>
+              <span>•</span>
+            </div>
+
+            <div
+              style="background-color: ${t.stickerBg}; color: ${t.stickerText};"
+              class="rounded-sm px-1.5 py-1 border border-black/40"
+            >
+              <div class="text-[9px] font-bold opacity-75 border-b border-black/15 pb-0.5 flex justify-between">
+                <span>SIDE A</span>
+                <span>${selected ? '★已选' : '90m'}</span>
+              </div>
+              <div class="text-[11px] font-bold line-clamp-2 mt-0.5 leading-tight h-7">${t.clue}</div>
+            </div>
+
+            <div class="bg-[#121521] border border-black/60 rounded-sm px-2 py-1 flex items-center justify-between">
+              <span class="w-3.5 h-3.5 rounded-full bg-[#090b12] border border-[#ffae52] flex items-center justify-center">
+                <span class="w-1 h-1 bg-[#ffae52]"></span>
+              </span>
+              <span class="flex-1 h-1.5 bg-[#3a261d] mx-1.5 border-y border-white/10"></span>
+              <span class="w-3.5 h-3.5 rounded-full bg-[#090b12] border border-[#ffae52] flex items-center justify-center">
+                <span class="w-1 h-1 bg-[#ffae52]"></span>
+              </span>
+            </div>
+
+            <div class="mx-auto w-[66%] h-2 bg-[#1a1e2e] border-t border-x border-black/70 rounded-t flex items-center justify-around px-1.5">
+              <span class="w-1 h-1 rounded-full bg-[#08070d]"></span>
+              <span class="w-1.5 h-1 bg-[#4a3226]"></span>
+              <span class="w-1 h-1 rounded-full bg-[#08070d]"></span>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 5. FM 19.82 树洞电台 · 极简留白与陈述式邀请对话引擎（把话筒交给听众）
+    // =========================================================================
+    function reflectPronouns(text) {
+      return text
+        .replace(/我自己/g, '你__SELF__')
+        .replace(/我的/g, '你的')
+        .replace(/我/g, '你')
+        .replace(/你__SELF__/g, '你自己')
+        .replace(/咱们/g, '你们');
+    }
+    const reflectedPronouns = reflectPronouns;
+
+    const RADIO_RULES = [
+      {
+        regex: /(?:放首歌|点歌|听歌|老歌|音乐|八音盒|磁带|猜歌|换一盘)(.*)/i,
+        replies: [
+          '好呀，点一下底下卡带机上的【⏏ EJECT 弹出小磁带】，就能挑一盘老歌放起来，听完想聊什么我都在。',
+          '随身听里放了 50 盘老磁带，你点底部【⏏ EJECT 弹出小磁带】随便挑一盘听听，我在播音室陪着你。'
+        ]
+      },
+      {
+        regex: /(?:小时候|童年|以前|当年|上学|初中|高中|大学|同学|同桌|小霸王|魂斗罗|健力宝|网吧|漫画)(.*)/,
+        replies: [
+          '一提起“{0}”，那股熟悉的旧时光画面一下子就出来了。顺着这段记忆，你想往下多讲讲都行，我在这儿听着。',
+          '咱们这代人对“{0}”总有说不完的念想。你接着往下说，当时的人和事，老伙计都爱听。'
+        ]
+      },
+      {
+        regex: /(?:为什么|凭什么|难道|是不是|怎么才能|怎么办|有什么意义|图什么|图啥)(.+)/,
+        replies: [
+          '嘿，老伙计，白天在外面已经够累了，夜里在树洞电台咱就不自己考自己啦。不找原因，你只管跟我讲讲今天遇到的事，我就在这儿听着。',
+          '听起来你心里正压着事呢。今晚不解这道题，把问号放一边，想跟我说说今天发生了什么都行。'
+        ]
+      },
+      {
+        regex: /(?:工作|加班|领导|同事|客户|老板|房贷|孩子|辅导作业|父母|压力|熬夜|好累|太累|撑不住|中年)(.*)/,
+        replies: [
+          '辛苦啦，白天在外面习惯把情绪调成静音，夜里在这儿不用端着。关于“{0}”，你想倒多少苦水我都接着，慢慢说就行。',
+          '嗯，我懂这种扛着担子的感觉。播音室很安静，你接着往下讲，把心里的事说出来会舒服些。'
+        ]
+      },
+      {
+        regex: /(?:孤独|孤单|没人懂|没有人理解|一个人|委屈|难过|想哭|失眠|睡不着|朋友|老友|爱人|家人)(.*)/,
+        replies: [
+          '夜深的时候，“{0}”的感觉总会悄悄冒出来。在这个频道里不用客气，你心里惦记着什么、想说什么，我都听着呢。',
+          '大人世界里的心事确实不容易随便跟人讲，但树洞一直为你开着。你想从哪说起都行，我陪着你。'
+        ]
+      },
+      {
+        regex: /(?:觉得自己|感觉自己|我好|我很|我真|焦虑|迷茫|害怕|担心|没用|失败|内耗|不行)(.*)/,
+        replies: [
+          '听你这么说，挺心疼你的，你只是连续运转太久、太想把事情做好了。今晚在这儿不用数落自己，想聊聊最近发生的事，我都在。',
+          '在 FM 19.82 树洞电台，你不需要向任何人证明什么。心里有什么压着的地方，慢慢讲出来就好。'
+        ]
+      },
+      {
+        regex: /(?:开心|快乐|幸福|顺利|喜欢|好吃|好看|小事|治愈|棒|猫|狗|晚风|月亮|星星|喝酒|撸串|散步)(.*)/,
+        replies: [
+          '隔着电波都能感受到你嘴角上扬的温度，听着真让人替你开心。多跟我讲讲当时的画面吧，我爱听这些烟火气。',
+          '真好，把这份“{0}”留进今晚的播音笔记里啦。你要是还想接着分享，老伙计一直听着呢。'
+        ]
+      }
+    ];
+
+    function buildRadioReply(rawInput) {
+      const cleaned = rawInput.trim().replace(/[.!?。！？]+$/g, '');
+      const lower = cleaned.toLowerCase();
+      const isQuestion = /[?？]$/.test(rawInput.trim());
+      state.turnCount += 1;
+
+      if (state.pendingGuessTape) {
+        const tape = state.pendingGuessTape;
+        const hitExact = tape.keywords.some(kw => lower.includes(kw.toLowerCase()));
+        const admittedUnknown = /(?:没有听出来|没听出来|听不出来|听不出|不知道|猜不出|猜不到|忘记了|忘了|记不清|没印象|叫啥|哪首|什么歌|啥歌|提示|提醒|公布|揭晓|不记得|想不起来|耳熟)/.test(cleaned);
+        const guessedOther = OTHER_SONG_HINTS.find(s => s.keywords.some(k => lower.includes(k)));
+
+        // 象限 A：猜对了 -> 简短确认 + 极简留白邀请阐述
+        if (hitExact) {
+          state.pendingGuessTape = null;
+          state.guessAttemptCount = 0;
+          const hook = tape.hooks[Math.floor(Math.random() * tape.hooks.length)];
+          return `一耳朵就听出来了，正是${tape.answer}。${hook}`;
+        }
+
+        // 象限 B：说“没有听出来” -> 第1次给轻巧歌词提醒，第2次揭晓并留白转场
+        if (admittedUnknown) {
+          state.guessAttemptCount += 1;
+          if (state.guessAttemptCount === 1) {
+            const firstStepTemplates = [
+              `没关系，老磁带调子确实容易一时对不上号。我给你提个醒——${tape.hint}，再想想看。`,
+              `没关系，咱们慢慢来。我给你递个小提醒：${tape.hint}，这下是不是有点印象了？`
+            ];
+            return firstStepTemplates[Math.floor(Math.random() * firstStepTemplates.length)];
+          }
+
+          state.pendingGuessTape = null;
+          state.guessAttemptCount = 0;
+          const secondStepPivotTemplates = [
+            `哈哈，没关系，这盘其实是${tape.answer}。咱们不猜歌啦，今晚播音室很安静，你心里装了什么事，或者今天遇到了什么，想跟我说说都行。`,
+            `哈哈，原来这盘磁带是${tape.answer}。不跟歌名较劲啦，咱们换个轻松的，你今天过得怎么样、或者想起什么旧事，随便讲给我听听。`
+          ];
+          return secondStepPivotTemplates[Math.floor(Math.random() * secondStepPivotTemplates.length)];
+        }
+
+        // 象限 C：猜错了 -> 将错就错，顺着他心里那首歌留白邀请
+        if (guessedOther) {
+          state.pendingGuessTape = null;
+          state.guessAttemptCount = 0;
+          return `哈哈，这盘其实是${tape.answer}，不过你一下子联想到了${guessedOther.name}，说明你心里正装着${guessedOther.vibe}。既然提起了它，有什么想跟我说的，尽管讲就行。`;
+        }
+
+        // 象限 D：直接倾诉现实故事 -> 自动解除猜歌态，全心倾听
+        state.pendingGuessTape = null;
+        state.guessAttemptCount = 0;
+      }
+
+      for (const rule of RADIO_RULES) {
+        const match = cleaned.match(rule.regex);
+        if (match) {
+          const captured = (match[1] || match[0] || '').trim();
+          const reflected = reflectPronouns(captured || cleaned);
+          const tpl = rule.replies[Math.floor(Math.random() * rule.replies.length)];
+          const fullReflected = reflectPronouns(cleaned);
+
+          state.memoryQueue.push(fullReflected);
+          if (state.memoryQueue.length > 3) state.memoryQueue.shift();
+
+          return tpl.replace(/\{0\}/g, reflected || fullReflected);
+        }
+      }
+
+      if (isQuestion) {
+        const reflected = reflectPronouns(cleaned);
+        return `嘿，今晚咱们不找标准答案，你把问号先放一边，直接跟老伙计讲讲关于“${reflected}”的故事吧，我在这儿听着。`;
+      }
+
+      if (state.memoryQueue.length > 0 && state.turnCount % 3 === 0) {
+        const recalled = state.memoryQueue.shift();
+        const nostalgiaSparks = [
+          '听着你讲这些，感觉特别真诚。你要是还想接着往下说，树洞一直在这儿陪着你。',
+          '我把你刚才讲的“' + recalled + '”都记在心里了。顺着你的思绪，还有什么想倒出来的，随便讲就行。',
+          '老伙计，夜还长，不着急总结，你想到哪说到哪，我都在这儿听着。'
+        ];
+        return nostalgiaSparks[Math.floor(Math.random() * nostalgiaSparks.length)];
+      }
+
+      const mirrored = reflectPronouns(cleaned);
+      const gentleFollowUps = [
+        `嗯，我听着呢。听到你说“${mirrored}”，挺有感触的。你接着往下讲，想多说点也没事。`,
+        `我把你讲的“${mirrored}”记在今晚的播音笔记里了。把这些说出来会舒服点吧，还有什么想跟我说的，树洞都接着。`,
+        `听你这么聊起“${mirrored}”，特别真实。不着急，顺着你的心意慢慢往下说就行，我一直听着。`
+      ];
+      return gentleFollowUps[Math.floor(Math.random() * gentleFollowUps.length)];
+    }
+
+    // =========================================================================
+    // 6. 消息气泡渲染与主题切换
+    // =========================================================================
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function scrollToBottom() {
+      const chat = document.getElementById('chatScroll');
+      if (chat) chat.scrollTop = chat.scrollHeight;
+    }
+
+    function appendListenerMessage(text) {
+      const list = document.getElementById('messageList');
+      const row = document.createElement('div');
+      row.className = 'flex justify-end';
+      row.innerHTML = `
+        <div class="max-w-[82%] flex flex-col items-end gap-1">
+          <span style="color: var(--text-sub);" class="font-vt text-xs tracking-wider px-1">老伙计来信</span>
+          <div style="background-color: var(--bg-bubble-user);" class="pixel-panel px-3 py-2 text-xs sm:text-sm leading-relaxed rounded-md select-text">
+            ${escapeHtml(text)}
+          </div>
+        </div>
+      `;
+      list.appendChild(row);
+      scrollToBottom();
+    }
+
+    function appendHostMessage(text, instant = false) {
+      const list = document.getElementById('messageList');
+      const row = document.createElement('div');
+      row.className = 'flex items-start gap-2';
+      row.innerHTML = `
+        <div style="background-color: var(--bg-bubble-bot);" class="w-8 h-8 pixel-panel flex items-center justify-center shrink-0 mt-4 rounded">
+          <svg viewBox="0 0 16 16" width="24" height="24" class="avatar-svg" shape-rendering="crispEdges">
+            <rect x="3" y="4" width="10" height="9" fill="#f7d098" />
+            <rect x="3" y="2" width="2" height="2" fill="#f7d098" />
+            <rect x="11" y="2" width="2" height="2" fill="#f7d098" />
+            <rect x="2" y="3" width="12" height="1" fill="#4ecdc4" />
+            <rect x="1" y="5" width="2" height="5" fill="#4ecdc4" />
+            <rect x="13" y="5" width="2" height="5" fill="#4ecdc4" />
+            <rect x="5" y="7" width="2" height="2" fill="#2b2129" />
+            <rect x="9" y="7" width="2" height="2" fill="#2b2129" />
+            <rect x="4" y="10" width="2" height="1" fill="#ff8fa3" />
+            <rect x="10" y="10" width="2" height="1" fill="#ff8fa3" />
+          </svg>
+        </div>
+
+        <div class="max-w-[84%] flex flex-col items-start gap-1">
+          <span style="color: var(--accent-amber);" class="font-vt text-xs tracking-wider px-1">主播 · 阿猫 (FM 19.82)</span>
+          <div style="background-color: var(--bg-bubble-bot);" class="pixel-panel px-3 py-2 text-xs sm:text-sm leading-relaxed rounded-md select-text">
+            <span class="msg-content"></span><span style="background-color: var(--accent-amber);" class="pixel-cursor inline-block w-1.5 h-3 ml-1 align-middle"></span>
+          </div>
+        </div>
+      `;
+      list.appendChild(row);
+      scrollToBottom();
+
+      const contentEl = row.querySelector('.msg-content');
+      const cursorEl = row.querySelector('.pixel-cursor');
+
+      if (instant) {
+        contentEl.textContent = text;
+        cursorEl.remove();
+        scrollToBottom();
+        return;
+      }
+
+      let i = 0;
+      state.isTyping = true;
+      const skipBtn = document.getElementById('skipBtn');
+      if (skipBtn) skipBtn.classList.remove('hidden');
+
+      state.finishCallback = () => {
+        clearInterval(state.typingTimer);
+        contentEl.textContent = text;
+        cursorEl.remove();
+        state.isTyping = false;
+        state.finishCallback = null;
+        if (skipBtn) skipBtn.classList.add('hidden');
+        scrollToBottom();
+      };
+
+      state.typingTimer = setInterval(() => {
+        if (i < text.length) {
+          contentEl.textContent += text[i++];
+          if (i % 3 === 0) playChipBeep(480 + (i % 4) * 35, 0.02, 'triangle', 0.018);
+          scrollToBottom();
+        } else {
+          state.finishCallback();
+        }
+      }, 26);
+    }
+
+    function finishTypingNow() {
+      if (state.finishCallback) state.finishCallback();
+    }
+
+    function handleSendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('replyInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      if (state.isTyping) finishTypingNow();
+      input.value = '';
+      playChipBeep(587, 0.04, 'square', 0.025);
+
+      appendListenerMessage(val);
+      switchToWalkmanMode();
+
+      const reply = buildRadioReply(val);
+      setTimeout(() => {
+        appendHostMessage(reply, false);
+      }, 300);
+    }
+
+    function toggleStudioTheme() {
+      const isSunset = document.body.classList.toggle('theme-sunset');
+      document.getElementById('themeIcon').textContent = isSunset ? '🌙' : '🏮';
+      document.getElementById('themeLabel').textContent = isSunset ? '星空' : '暖炉';
+      playChipBeep(440, 0.05);
+    }
+
+    const OPENING_SCRIPTS = [
+      [
+        '滋滋……调频锁定 FM 19.82 树洞电台。晚上好，老伙计，我是值班主播阿猫。播音室的橘子汽水刚开盖，台灯也拧亮了。',
+        '今晚不讲道理，我想听点具体的——你可以点【💬 说点啥】给我讲讲今天发生的一件小事，或者点底下随身听的【⏏ EJECT 弹出小磁带】挑一盘老歌听完回来猜猜看！'
+      ],
+      [
+        '欢迎回到 FM 19.82 树洞电台，咱们 80 后的深夜小据点。白天在外面当大人辛苦啦，这会儿不用端着。',
+        '点底下随身听的【⏏ EJECT 弹出小磁带】能弹出一排 50 盘神秘老磁带，挑一盘推进去听听，或者直接点【💬 说点啥】跟老伙计聊聊今天的故事！'
+      ]
+    ];
+
+    function playOpeningBroadcast() {
+      const list = document.getElementById('messageList');
+      list.innerHTML = '';
+      const script = OPENING_SCRIPTS[Math.floor(Math.random() * OPENING_SCRIPTS.length)];
+      appendHostMessage(script[0], true);
+      setTimeout(() => {
+        appendHostMessage(script[1], false);
+      }, 240);
+    }
+
+    function retuneRadio() {
+      if (state.isTyping) finishTypingNow();
+      stopPlayback();
+      state.isEjected = false;
+      state.memoryQueue = [];
+      state.turnCount = 0;
+      state.pendingGuessTape = null;
+      state.guessAttemptCount = 0;
+      switchToWalkmanMode();
+      playMechanicalClick('insert');
+      playOpeningBroadcast();
+    }
+
+    window.onload = function () {
+      updateWalkmanVisuals();
+      renderTapeShelf();
+      playOpeningBroadcast();
+    };
+  </script>
+</body>
+</html>
